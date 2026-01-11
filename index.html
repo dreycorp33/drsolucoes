@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Império Morangos - Gestão Profissional</title>
+
+  <!-- jsPDF e AutoTable (CDN) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
+  <style>
+    :root { --primary: #d32f2f; --secondary: #2980b9; --success: #27ae60; --warning: #f39c12; --danger: #eb4d4b; --bg: #fff5f5; }
+    body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 20px; font-size: 13px; }
+    .container { max-width: 1350px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); border-top: 5px solid var(--primary); display: grid; grid-template-columns: 350px 1fr; gap: 20px; }
+    .top-bar { grid-column: span 2; background: #2d3436; color: white; padding: 12px 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .dash { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; grid-column: span 2; }
+    .card { padding: 15px; border-radius: 8px; color: white; }
+    .card-vendas { background: var(--success); }
+    .card-recebido { background: var(--secondary); }
+    .card-pendente { background: var(--warning); }
+    .card-val { font-size: 24px; font-weight: bold; display: block; margin-top: 5px; }
+    .list-box { background: #f9f9f9; border: 1px solid #eee; border-radius: 8px; max-height: 180px; overflow-y: auto; margin: 10px 0; }
+    .item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee; align-items: center; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; }
+    th { background: #f1f2f6; padding: 12px; text-align: left; }
+    td { padding: 10px; border-bottom: 1px solid #eee; }
+    .status-pago { color: var(--success); font-weight: bold; }
+    .status-aberto { color: var(--danger); font-weight: bold; }
+    button { border: none; border-radius: 6px; cursor: pointer; font-weight: bold; padding: 10px; }
+    .btn-del { background: var(--danger); color: white; padding: 5px 8px; font-size: 11px; margin-left: 5px; }
+    .btn-quitar { background: var(--success); color: white; padding: 5px 8px; font-size: 11px; }
+    input, select { padding: 8px; border: 1px solid #ddd; border-radius: 6px; width: 100%; box-sizing: border-box; margin-bottom: 5px; }
+    #cupom { display: none; width: 72mm; padding: 10px; font-family: 'Courier New', monospace; }
+    @media print { body * { visibility: hidden; } #cupom, #cupom * { visibility: visible; } #cupom { display: block; position: absolute; left: 0; top: 0; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="top-bar">
+      <div>🍓 <strong>IMPÉRIO MORANGOS</strong> | Gestão Administrativa</div>
+      <div>
+        <input type="file" id="importFile" style="display:none" onchange="Manager.importar(this)">
+        <button onclick="document.getElementById('importFile').click()" style="background:#4a69bd; color:white">📥 RESTAURAR</button>
+        <button onclick="Manager.exportar()" style="background:#e67e22; color:white">📤 BACKUP (.JSON)</button>
+      </div>
+    </div>
+
+    <div class="dash">
+      <div class="card card-vendas"><span>TOTAL VENDIDO</span><span class="card-val" id="dash_total_vendas">R$ 0,00</span></div>
+      <div class="card card-recebido"><span>TOTAL RECEBIDO</span><span class="card-val" id="dash_total_pago">R$ 0,00</span></div>
+      <div class="card card-pendente"><span>A RECEBER</span><span class="card-val" id="dash_saldo_devedor">R$ 0,00</span></div>
+    </div>
+
+    <aside>
+      <h3>👥 Clientes</h3>
+      <input type="text" id="c_nome" placeholder="Nome">
+      <input type="text" id="c_end" placeholder="Endereço">
+      <button onclick="App.cadastrar('CLI')" style="background:var(--primary); color:white; width:100%">SALVAR CLIENTE</button>
+      <div id="lista_clientes" class="list-box"></div>
+
+      <h3>📦 Produtos</h3>
+      <input type="text" id="p_nome" placeholder="Produto">
+      <input type="text" id="p_preco" placeholder="Preço (ex: 4.50)">
+      <button onclick="App.cadastrar('PRO')" style="background:#6c5ce7; color:white; width:100%">SALVAR PRODUTO</button>
+      <div id="lista_produtos" class="list-box"></div>
+
+      <button onclick="Relatorio.gerar()" style="background:var(--secondary); color:white; width:100%; margin-top:20px; padding:12px">📄 RELATÓRIO PDF</button>
+    </aside>
+
+    <main>
+      <div style="border: 2px solid #eee; padding: 15px; border-radius: 10px; background: #fff;">
+        <h4 style="margin:0 0 10px 0">🛒 Lançar Venda</h4>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <input type="text" id="v_cli" placeholder="Cliente">
+          <input type="text" id="v_end" placeholder="Endereço">
+        </div>
+        <div style="display:flex; gap:5px; align-items:center;">
+          <select id="v_prod" style="flex:2">
+            <option value="">Selecione o produto</option>
+          </select>
+          <input type="number" id="v_qtd" value="1" style="flex:0.5" min="1">
+          <input type="text" id="v_prc" placeholder="R$ Unid (opcional)" style="flex:0.7">
+          <button onclick="App.venda.add()" style="background:var(--success); color:white">➕</button>
+        </div>
+        <div id="v_preview" style="font-size:11px; color:#e67e22; margin:5px 0"></div>
+        <label>Vencimento:</label>
+        <input type="date" id="v_venc">
+        <button onclick="App.venda.fechar()" style="background:var(--primary); color:white; width:100%; margin-top:10px">FINALIZAR E IMPRIMIR</button>
+      </div>
+
+      <h3>📜 Histórico de Movimentação</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Cliente</th>
+            <th>Valor</th>
+            <th>Status / Motivo</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="lista_mov"></tbody>
+      </table>
+    </main>
+  </div>
+
+  <div id="cupom">
+    <center><h2>IMPÉRIO MORANGOS</h2></center><hr>
+    <strong>CLIENTE:</strong> <span id="p_cli"></span><br>
+    <strong>ENDEREÇO:</strong> <span id="p_end"></span><br>
+    <strong>VENCIMENTO:</strong> <span id="p_venc"></span><hr>
+    <div id="p_itens"></div><hr>
+    <div style="text-align:right"><strong>TOTAL: <span id="p_total"></span></strong></div>
+  </div>
+
+  <script>
+    const DB = {
+      get: (k) => {
+        try { return JSON.parse(localStorage.getItem(k)) || []; } catch(e){ return []; }
+      },
+      set: (k, v) => localStorage.setItem(k, JSON.stringify(v))
+    };
+
+    const formatBR = (v) => {
+      const n = Number(v) || 0;
+      return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n);
+    };
+
+    const App = {
+      carrinho: [],
+
+      init() {
+        const hoje = new Date().toISOString().split('T')[0];
+        document.getElementById('v_venc').value = hoje;
+        this.render();
+      },
+
+      cadastrar(tipo) {
+        if (tipo === 'CLI') {
+          const nome = document.getElementById('c_nome').value.trim();
+          const endereco = document.getElementById('c_end').value.trim();
+          if (!nome) return alert('Informe o nome do cliente.');
+          const lista = DB.get('cli');
+          lista.push({ id: Date.now(), nome, endereco });
+          DB.set('cli', lista);
+          document.getElementById('c_nome').value = '';
+          document.getElementById('c_end').value = '';
+          this.render();
+        } else {
+          const nome = document.getElementById('p_nome').value.trim();
+          const precoRaw = document.getElementById('p_preco').value.trim();
+          const preco = precoRaw ? parseFloat(precoRaw.toString().replace(',', '.')) : 0;
+          if (!nome) return alert('Informe o nome do produto.');
+          const lista = DB.get('pro');
+          lista.push({ id: Date.now(), nome, preco: isNaN(preco) ? 0 : preco });
+          DB.set('pro', lista);
+          document.getElementById('p_nome').value = '';
+          document.getElementById('p_preco').value = '';
+          this.render();
+        }
+      },
+
+      excluirCadastro(tipo, id) {
+        if (!confirm("Apagar do cadastro?")) return;
+        const chave = tipo === 'CLI' ? 'cli' : 'pro';
+        DB.set(chave, DB.get(chave).filter(i => i.id !== id));
+        this.render();
+      },
+
+      venda: {
+        add() {
+          const prodSel = document.getElementById('v_prod');
+          const p = prodSel.value;
+          const q = parseFloat(document.getElementById('v_qtd').value) || 1;
+          let vRaw = document.getElementById('v_prc').value.trim();
+
+          // If price not provided, try product price
+          let v;
+          if (vRaw) {
+            v = parseFloat(vRaw.replace(',', '.'));
+          } else {
+            const pro = DB.get('pro').find(pp => pp.nome === p);
+            v = pro ? Number(pro.preco) : NaN;
+          }
+          if (!p || isNaN(v) || v <= 0) return alert('Produto ou preço inválido.');
+          App.carrinho.push({ p, q, t: Number((q * v).toFixed(2)) });
+          document.getElementById('v_preview').innerText = "Carrinho: " + App.carrinho.map(i => `${i.q}x ${i.p}`).join(', ');
+        },
+        fechar() {
+          const cli = document.getElementById('v_cli').value.trim();
+          const end = document.getElementById('v_end').value.trim();
+          const venc = document.getElementById('v_venc').value;
+          if (!cli) return alert('Informe o cliente.');
+          if (App.carrinho.length === 0) return alert("Carrinho vazio!");
+          const total = App.carrinho.reduce((a, b) => a + b.t, 0).toFixed(2);
+
+          const mov = {
+            id: Date.now(),
+            data: new Date().toISOString(),
+            cli, end, venc,
+            val: total,
+            desc: App.carrinho.map(i => `${i.q}x ${i.p}`).join(', '),
+            status: (venc === new Date().toISOString().split('T')[0]) ? 'PAGO' : 'ABERTO',
+            motivo: (venc === new Date().toISOString().split('T')[0]) ? 'Venda à Vista' : 'Boleto/Prazo'
+          };
+
+          const hist = DB.get('mov'); hist.push(mov); DB.set('mov', hist);
+
+          // Print
+          document.getElementById('p_cli').innerText = cli;
+          document.getElementById('p_end').innerText = end;
+          document.getElementById('p_venc').innerText = new Date(venc).toLocaleDateString();
+          document.getElementById('p_itens').innerHTML = App.carrinho.map(i => `<div>${i.q}x ${i.p} - ${formatBR(i.t)}</div>`).join('');
+          document.getElementById('p_total').innerText = formatBR(total);
+          window.print();
+
+          // reset cart and UI
+          App.carrinho = [];
+          document.getElementById('v_preview').innerText = '';
+          document.getElementById('v_prc').value = '';
+          document.getElementById('v_qtd').value = 1;
+          this_render = App; // no-op to avoid linter warning inlined
+          App.render();
+        }
+      },
+
+      baixarBoleto(id) {
+        const motivo = prompt("Motivo do Pagamento (Ex: Pix, Dinheiro, Transferência):", "Pix");
+        if (motivo === null) return;
+        const hist = DB.get('mov');
+        const idx = hist.findIndex(m => m.id === id);
+        if (idx === -1) return;
+        hist[idx].status = 'PAGO';
+        hist[idx].motivo = motivo;
+        DB.set('mov', hist);
+        this.render();
+      },
+
+      apagarNota(id) {
+        if (!confirm("ATENÇÃO: Deseja apagar esta nota permanentemente? Isso alterará seu saldo financeiro.")) return;
+        const hist = DB.get('mov').filter(m => m.id !== id);
+        DB.set('mov', hist);
+        this.render();
+      },
+
+      render() {
+        const movs = DB.get('mov').slice().reverse();
+        const clis = DB.get('cli');
+        const pros = DB.get('pro');
+
+        const vTot = movs.reduce((a,b) => a + parseFloat(b.val || 0), 0);
+        const pTot = movs.filter(m => m.status === 'PAGO').reduce((a,b) => a + parseFloat(b.val || 0), 0);
+        document.getElementById('dash_total_vendas').innerText = formatBR(vTot);
+        document.getElementById('dash_total_pago').innerText = formatBR(pTot);
+        document.getElementById('dash_saldo_devedor').innerText = formatBR(vTot - pTot);
+
+        document.getElementById('lista_clientes').innerHTML = clis.map(c => `<div class="item"><div><strong>${c.nome}</strong><br><small>${c.endereco || ''}</small></div><div><button onclick="document.getElementById('v_cli').value='${c.nome}'; document.getElementById('v_end').value='${c.endereco || ''}'" style="background:var(--success); color:white">✅</button><button onclick="App.excluirCadastro('CLI', ${c.id})" class="btn-del">🗑️</button></div></div>`).join('');
+        document.getElementById('lista_produtos').innerHTML = pros.map(p => `<div class="item"><span>${p.nome} ${p.preco ? `- ${formatBR(p.preco)}` : ''}</span><div><button onclick="document.getElementById('v_prod').value='${p.nome}'; document.getElementById('v_prc').value='${p.preco ? p.preco : ''}'" style="background:#6c5ce7; color:white">🛒</button><button onclick="App.excluirCadastro('PRO', ${p.id})" class="btn-del">🗑️</button></div></div>`).join('');
+
+        // populate product select
+        const sel = document.getElementById('v_prod');
+        sel.innerHTML = `<option value="">Selecione o produto</option>` + pros.map(p => `<option value="${p.nome}">${p.nome}${p.preco ? ' - ' + formatBR(p.preco) : ''}</option>`).join('');
+
+        document.getElementById('lista_mov').innerHTML = movs.map(m => `
+          <tr>
+            <td>${new Date(m.data).toLocaleDateString()}</td>
+            <td><strong>${m.cli}</strong></td>
+            <td>${formatBR(m.val)}</td>
+            <td><span class="status-${m.status.toLowerCase()}">${m.status}</span><br><small>${m.motivo || ''}</small></td>
+            <td>
+              ${m.status === 'ABERTO' ? `<button class="btn-quitar" onclick="App.baixarBoleto(${m.id})">QUITAR</button>` : ''}
+              <button class="btn-del" onclick="App.apagarNota(${m.id})">🗑️ APAGAR</button>
+            </td>
+          </tr>`).join('');
+      }
+    };
+
+    const Manager = {
+      exportar() {
+        const d = { cli: DB.get('cli'), pro: DB.get('pro'), mov: DB.get('mov') };
+        const json = JSON.stringify(d, null, 2);
+        const blob = new Blob([json], { type: 'application/json;charset=utf-8' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `IMP_MORANGOS_BACKUP_${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+      },
+      importar(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const fr = new FileReader();
+        fr.onload = (e) => {
+          try {
+            const d = JSON.parse(e.target.result);
+            if (!d) throw new Error('Arquivo inválido');
+            DB.set('cli', d.cli || []);
+            DB.set('pro', d.pro || []);
+            DB.set('mov', d.mov || []);
+            alert('Backup restaurado com sucesso!');
+            location.reload();
+          } catch (err) {
+            alert('Falha ao restaurar: arquivo inválido.');
+            console.error(err);
+          }
+        };
+        fr.readAsText(file);
+      }
+    };
+
+    const Relatorio = {
+      gerar() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const movs = DB.get('mov') || [];
+        doc.text("RELATÓRIO IMPÉRIO MORANGOS", 14, 15);
+        doc.autoTable({
+          startY: 25,
+          head: [['Data', 'Cliente', 'Valor', 'Status', 'Motivo']],
+          body: movs.map(m => [new Date(m.data).toLocaleDateString(), m.cli, formatBR(m.val), m.status, m.motivo || ''])
+        });
+        doc.save("Relatorio.pdf");
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => App.init());
+  </script>
+</body>
+</html>
