@@ -1060,6 +1060,27 @@
     const shop = {
       bases: [],
       comps: [],
+      defaultComps: [
+        { id: "banana", nome: "Banana", preco: 2.5 },
+        { id: "morango", nome: "Morango", preco: 3 },
+        { id: "kiwi", nome: "Kiwi", preco: 3 },
+        { id: "uva", nome: "Uva", preco: 3 },
+        { id: "granola", nome: "Granola", preco: 2.5 },
+        { id: "pacoca", nome: "Paçoca", preco: 2.5 },
+        { id: "leite-em-po", nome: "Leite em pó", preco: 3 },
+        { id: "ovomaltine", nome: "Ovomaltine", preco: 4 },
+        { id: "chocolate", nome: "Calda de chocolate", preco: 2.5 },
+        { id: "morango-calda", nome: "Calda de morango", preco: 2.5 },
+        { id: "leite-condensado", nome: "Leite condensado", preco: 2.5 },
+        { id: "doce-de-leite", nome: "Doce de leite", preco: 3 },
+        { id: "nutella", nome: "Nutella", preco: 5 },
+        { id: "mm", nome: "M&M's", preco: 4.5 },
+        { id: "bis", nome: "Bis", preco: 3.5 },
+        { id: "castanha", nome: "Castanha", preco: 3.5 },
+        { id: "coco", nome: "Coco ralado", preco: 2.5 },
+        { id: "amendoim", nome: "Amendoim", preco: 2.5 },
+        { id: "mel", nome: "Mel", preco: 2.5 }
+      ],
       base: null,
       selectedComps: new Set(),
       freeAddons: [
@@ -1125,6 +1146,9 @@
           if (x.ativo === false) return;
           shop.comps.push({ id: d.id, nome: x.nome || "Complemento", preco: Number(x.preco || 0) });
         });
+        if (!shop.comps.length) {
+          shop.comps = shop.defaultComps.map(c => ({ ...c }));
+        }
 
         shopRender();
         shopStatus.textContent = "Catálogo carregado.";
