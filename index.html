@@ -1,329 +1,1622 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Império Morangos - Gestão Profissional</title>
-
-  <!-- jsPDF e AutoTable (CDN) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Plataforma Delivery White-Label | Console Único + PDV 76mm</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 
   <style>
-    :root { --primary: #d32f2f; --secondary: #2980b9; --success: #27ae60; --warning: #f39c12; --danger: #eb4d4b; --bg: #fff5f5; }
-    body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 20px; font-size: 13px; }
-    .container { max-width: 1350px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); border-top: 5px solid var(--primary); display: grid; grid-template-columns: 350px 1fr; gap: 20px; }
-    .top-bar { grid-column: span 2; background: #2d3436; color: white; padding: 12px 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-    .dash { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; grid-column: span 2; }
-    .card { padding: 15px; border-radius: 8px; color: white; }
-    .card-vendas { background: var(--success); }
-    .card-recebido { background: var(--secondary); }
-    .card-pendente { background: var(--warning); }
-    .card-val { font-size: 24px; font-weight: bold; display: block; margin-top: 5px; }
-    .list-box { background: #f9f9f9; border: 1px solid #eee; border-radius: 8px; max-height: 180px; overflow-y: auto; margin: 10px 0; }
-    .item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee; align-items: center; }
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; }
-    th { background: #f1f2f6; padding: 12px; text-align: left; }
-    td { padding: 10px; border-bottom: 1px solid #eee; }
-    .status-pago { color: var(--success); font-weight: bold; }
-    .status-aberto { color: var(--danger); font-weight: bold; }
-    button { border: none; border-radius: 6px; cursor: pointer; font-weight: bold; padding: 10px; }
-    .btn-del { background: var(--danger); color: white; padding: 5px 8px; font-size: 11px; margin-left: 5px; }
-    .btn-quitar { background: var(--success); color: white; padding: 5px 8px; font-size: 11px; }
-    input, select { padding: 8px; border: 1px solid #ddd; border-radius: 6px; width: 100%; box-sizing: border-box; margin-bottom: 5px; }
-    #cupom { display: none; width: 72mm; padding: 10px; font-family: 'Courier New', monospace; }
-    @media print { body * { visibility: hidden; } #cupom, #cupom * { visibility: visible; } #cupom { display: block; position: absolute; left: 0; top: 0; } }
+    :root {
+      --brand-color: #7c3aed;
+      --brand-color-dark: #6d28d9;
+    }
+    html { scroll-behavior: smooth; }
+    .card { transition: transform .15s ease, box-shadow .15s ease; }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 18px 40px rgba(0,0,0,.10); }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+
+    /* ===== CUPOM 76mm (window.print) ===== */
+    @media print {
+      @page { size: 76mm auto; margin: 2mm; }
+      body * { visibility: hidden !important; }
+      #receiptPrintArea, #receiptPrintArea * { visibility: visible !important; }
+      #receiptPrintArea {
+        position: fixed; left: 0; top: 0;
+        width: 76mm; background: #fff; padding: 0;
+      }
+      .no-print { display: none !important; }
+    }
+    .receipt-preview { width: 76mm; max-width: 76mm; background: #fff; border: 1px solid rgba(0,0,0,.08); border-radius: 12px; padding: 10px; }
+    .receipt-line { display:flex; justify-content:space-between; gap:8px; }
+    .receipt-hr { border-top: 1px dashed rgba(0,0,0,.35); margin: 8px 0; }
+    .bg-purple-700 { background-color: var(--brand-color) !important; }
+    .hover\:bg-purple-800:hover { background-color: var(--brand-color-dark) !important; }
+    .text-purple-800 { color: var(--brand-color-dark) !important; }
   </style>
 </head>
-<body>
-  <div class="container">
-    <div class="top-bar">
-      <div>🍓 <strong>IMPÉRIO MORANGOS</strong> | Gestão Administrativa</div>
-      <div>
-        <input type="file" id="importFile" style="display:none" onchange="Manager.importar(this)">
-        <button onclick="document.getElementById('importFile').click()" style="background:#4a69bd; color:white">📥 RESTAURAR</button>
-        <button onclick="Manager.exportar()" style="background:#e67e22; color:white">📤 BACKUP (.JSON)</button>
-      </div>
-    </div>
 
-    <div class="dash">
-      <div class="card card-vendas"><span>TOTAL VENDIDO</span><span class="card-val" id="dash_total_vendas">R$ 0,00</span></div>
-      <div class="card card-recebido"><span>TOTAL RECEBIDO</span><span class="card-val" id="dash_total_pago">R$ 0,00</span></div>
-      <div class="card card-pendente"><span>A RECEBER</span><span class="card-val" id="dash_saldo_devedor">R$ 0,00</span></div>
-    </div>
-
-    <aside>
-      <h3>👥 Clientes</h3>
-      <input type="text" id="c_nome" placeholder="Nome">
-      <input type="text" id="c_end" placeholder="Endereço">
-      <button onclick="App.cadastrar('CLI')" style="background:var(--primary); color:white; width:100%">SALVAR CLIENTE</button>
-      <div id="lista_clientes" class="list-box"></div>
-
-      <h3>📦 Produtos</h3>
-      <input type="text" id="p_nome" placeholder="Produto">
-      <input type="text" id="p_preco" placeholder="Preço (ex: 4.50)">
-      <button onclick="App.cadastrar('PRO')" style="background:#6c5ce7; color:white; width:100%">SALVAR PRODUTO</button>
-      <div id="lista_produtos" class="list-box"></div>
-
-      <button onclick="Relatorio.gerar()" style="background:var(--secondary); color:white; width:100%; margin-top:20px; padding:12px">📄 RELATÓRIO PDF</button>
-    </aside>
-
-    <main>
-      <div style="border: 2px solid #eee; padding: 15px; border-radius: 10px; background: #fff;">
-        <h4 style="margin:0 0 10px 0">🛒 Lançar Venda</h4>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-          <input type="text" id="v_cli" placeholder="Cliente">
-          <input type="text" id="v_end" placeholder="Endereço">
+<body class="min-h-screen bg-gradient-to-b from-purple-50 to-white text-gray-900">
+  <!-- TOPBAR -->
+  <header class="sticky top-0 z-50 border-b bg-white/85 backdrop-blur no-print">
+    <div class="mx-auto max-w-7xl px-4 py-4 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="h-10 w-10 rounded-xl bg-purple-700 text-white grid place-items-center font-bold">🍇</div>
+        <div class="leading-tight">
+          <div class="text-base font-extrabold" id="appTitle">Console Único | Delivery + Admin + PDV (Cupom 76mm)</div>
+          <div class="text-xs text-gray-600" id="appSubtitle">Aguardando configuração…</div>
         </div>
-        <div style="display:flex; gap:5px; align-items:center;">
-          <select id="v_prod" style="flex:2">
-            <option value="">Selecione o produto</option>
-          </select>
-          <input type="number" id="v_qtd" value="1" style="flex:0.5" min="1">
-          <input type="text" id="v_prc" placeholder="R$ Unid (opcional)" style="flex:0.7">
-          <button onclick="App.venda.add()" style="background:var(--success); color:white">➕</button>
-        </div>
-        <div id="v_preview" style="font-size:11px; color:#e67e22; margin:5px 0"></div>
-        <label>Vencimento:</label>
-        <input type="date" id="v_venc">
-        <button onclick="App.venda.fechar()" style="background:var(--primary); color:white; width:100%; margin-top:10px">FINALIZAR E IMPRIMIR</button>
       </div>
 
-      <h3>📜 Histórico de Movimentação</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Data</th>
-            <th>Cliente</th>
-            <th>Valor</th>
-            <th>Status / Motivo</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody id="lista_mov"></tbody>
-      </table>
-    </main>
-  </div>
+      <div class="flex items-center gap-2">
+        <span class="hidden md:inline text-xs font-semibold text-gray-600">Usuário:</span>
+        <span class="px-3 py-2 rounded-xl bg-gray-100 text-sm font-bold" id="userBadge">Desconectado</span>
+        <button id="btnSignOut" class="hidden px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 font-bold">Sair</button>
+      </div>
+    </div>
+  </header>
 
-  <div id="cupom">
-    <center><h2>IMPÉRIO MORANGOS</h2></center><hr>
-    <strong>CLIENTE:</strong> <span id="p_cli"></span><br>
-    <strong>ENDEREÇO:</strong> <span id="p_end"></span><br>
-    <strong>VENCIMENTO:</strong> <span id="p_venc"></span><hr>
-    <div id="p_itens"></div><hr>
-    <div style="text-align:right"><strong>TOTAL: <span id="p_total"></span></strong></div>
-  </div>
+  <main class="mx-auto max-w-7xl px-4 py-6 no-print">
+    <div class="grid lg:grid-cols-12 gap-4">
+      <!-- SIDEBAR -->
+      <aside class="lg:col-span-3">
+        <div class="rounded-2xl border bg-white p-4">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <div class="text-sm font-semibold text-gray-500">Navegação</div>
+              <div class="text-xs text-gray-500">Um arquivo único controlando tudo.</div>
+            </div>
+            <span class="px-2 py-1 rounded-lg bg-purple-50 text-purple-800 text-xs font-extrabold">v1</span>
+          </div>
 
-  <script>
-    const DB = {
-      get: (k) => {
-        try { return JSON.parse(localStorage.getItem(k)) || []; } catch(e){ return []; }
-      },
-      set: (k, v) => localStorage.setItem(k, JSON.stringify(v))
+          <div class="mt-4 grid gap-2">
+            <button data-tab="tabPDV" class="tabBtn px-4 py-3 rounded-xl bg-purple-700 text-white font-extrabold text-left">
+              PDV + Cupom 76mm
+              <div class="text-xs text-white/80 font-semibold">Venda balcão + impressão</div>
+            </button>
+
+            <button data-tab="tabDelivery" class="tabBtn px-4 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 font-extrabold text-left">
+              Delivery (Público)
+              <div class="text-xs text-gray-600 font-semibold">Loja / Monte seu Açaí</div>
+            </button>
+
+            <button data-tab="tabAdmin" class="tabBtn px-4 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 font-extrabold text-left">
+              Admin (Loja)
+              <div class="text-xs text-gray-600 font-semibold">CRUD + pedidos</div>
+            </button>
+
+            <button data-tab="tabLogin" class="tabBtn px-4 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 font-extrabold text-left">
+              Login / Acesso
+              <div class="text-xs text-gray-600 font-semibold">Admin</div>
+            </button>
+
+            <button data-tab="tabConfig" class="tabBtn px-4 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 font-extrabold text-left">
+              Configurações
+              <div class="text-xs text-gray-600 font-semibold">Firebase + loja + impressão</div>
+            </button>
+          </div>
+
+          <div class="mt-4 rounded-xl bg-purple-50 border border-purple-100 p-3">
+            <div class="text-sm font-extrabold text-purple-900">Impressão 76mm (recomendação)</div>
+            <ul class="mt-2 text-xs text-purple-900/80 list-disc pl-5 space-y-1">
+              <li>Impressora térmica: papel 76mm</li>
+              <li>Escala: 100%</li>
+              <li>Margens: Nenhuma (ou mínima)</li>
+              <li>Desative cabeçalho/rodapé do navegador</li>
+            </ul>
+          </div>
+
+          <div class="mt-4 rounded-xl bg-gray-50 border p-3">
+            <div class="text-sm font-extrabold text-gray-800">Status</div>
+            <div class="mt-2 text-xs text-gray-600 space-y-1">
+              <div>clienteId: <span class="mono font-bold" id="lblClienteId">—</span></div>
+              <div>role: <span class="mono font-bold" id="lblRole">—</span></div>
+              <div>WhatsApp: <span class="mono font-bold" id="lblWhatsApp">—</span></div>
+              <div>Pix API: <span class="mono font-bold" id="lblPixApi">—</span></div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- CONTENT -->
+      <section class="lg:col-span-9 space-y-4">
+
+        <!-- TAB: PDV -->
+        <div id="tabPDV" class="tabPanel">
+          <div class="rounded-2xl border bg-white p-5">
+            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+              <div>
+                <h2 class="text-2xl font-extrabold text-purple-800">PDV (Ponto de Venda)</h2>
+                <p class="text-sm text-gray-600 mt-1">
+                  Vendas rápidas com leitura de produtos do Firestore, cupons, desconto manual, registro de pedido e impressão de cupom 76mm.
+                </p>
+              </div>
+              <div class="flex gap-2">
+                <button id="pdvReload" class="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 font-extrabold">Recarregar</button>
+                <button id="pdvNew" class="px-4 py-2 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-extrabold">Nova venda</button>
+              </div>
+            </div>
+
+            <div class="mt-5 grid xl:grid-cols-12 gap-4">
+              <!-- Produtos -->
+              <div class="xl:col-span-7 rounded-2xl border bg-white p-4">
+                <div class="flex flex-col md:flex-row md:items-center gap-3 md:justify-between">
+                  <div>
+                    <div class="text-sm font-semibold text-gray-500">Produtos (coleção: produtos)</div>
+                    <div class="text-xs text-gray-500">Clique para adicionar no carrinho.</div>
+                  </div>
+                  <input id="pdvSearch" type="text" placeholder="Buscar produto…"
+                         class="w-full md:w-72 border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-300" />
+                </div>
+
+                <div id="pdvProducts" class="mt-4 grid sm:grid-cols-2 gap-3"></div>
+              </div>
+
+              <!-- Carrinho + Totais -->
+              <div class="xl:col-span-5 rounded-2xl border bg-white p-4">
+                <div class="text-sm font-semibold text-gray-500">Carrinho</div>
+
+                <div class="mt-3 overflow-auto border rounded-xl">
+                  <table class="w-full text-sm">
+                    <thead class="bg-gray-50">
+                      <tr>
+                        <th class="text-left px-3 py-2">Item</th>
+                        <th class="text-center px-3 py-2">Qtd</th>
+                        <th class="text-right px-3 py-2">Total</th>
+                        <th class="px-2 py-2"></th>
+                      </tr>
+                    </thead>
+                    <tbody id="pdvCart"></tbody>
+                  </table>
+                </div>
+
+                <div class="mt-4 grid gap-3">
+                  <div class="grid grid-cols-2 gap-2">
+                    <div>
+                      <label class="text-xs font-extrabold text-gray-600">Cupom</label>
+                      <input id="pdvCoupon" class="w-full border rounded-xl px-3 py-2" placeholder="EX: ACAI10">
+                    </div>
+                    <div>
+                      <label class="text-xs font-extrabold text-gray-600">Desconto (R$)</label>
+                      <input id="pdvDiscount" type="number" step="0.01" min="0" class="w-full border rounded-xl px-3 py-2" placeholder="0,00">
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-2 gap-2">
+                    <div>
+                      <label class="text-xs font-extrabold text-gray-600">Pagamento</label>
+                      <select id="pdvPay" class="w-full border rounded-xl px-3 py-2">
+                        <option value="pix">Pix</option>
+                        <option value="dinheiro">Dinheiro</option>
+                        <option value="cartao">Cartão</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="text-xs font-extrabold text-gray-600">Recebido (R$)</label>
+                      <input id="pdvReceived" type="number" step="0.01" min="0" class="w-full border rounded-xl px-3 py-2" placeholder="0,00">
+                    </div>
+                  </div>
+
+                  <div class="rounded-xl bg-gray-50 border p-3">
+                    <div class="flex justify-between text-sm">
+                      <span class="text-gray-600 font-semibold">Subtotal</span>
+                      <span id="pdvSubtotal" class="font-extrabold">R$ 0,00</span>
+                    </div>
+                    <div class="flex justify-between text-sm mt-1">
+                      <span class="text-gray-600 font-semibold">Descontos</span>
+                      <span id="pdvDiscounts" class="font-extrabold">R$ 0,00</span>
+                    </div>
+                    <div class="flex justify-between text-lg mt-2">
+                      <span class="text-gray-900 font-extrabold">Total</span>
+                      <span id="pdvTotal" class="text-purple-800 font-extrabold">R$ 0,00</span>
+                    </div>
+                    <div class="flex justify-between text-sm mt-1">
+                      <span class="text-gray-600 font-semibold">Troco</span>
+                      <span id="pdvChange" class="font-extrabold">R$ 0,00</span>
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-2 gap-2">
+                    <button id="pdvPrint" class="px-4 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 font-extrabold">
+                      Imprimir cupom
+                    </button>
+                    <button id="pdvFinish" class="px-4 py-3 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-extrabold">
+                      Finalizar venda
+                    </button>
+                  </div>
+
+                  <div class="text-xs text-gray-500" id="pdvStatus"></div>
+                </div>
+              </div>
+
+              <!-- Prévia do cupom -->
+              <div class="xl:col-span-12">
+                <div class="rounded-2xl border bg-white p-4">
+                  <div class="flex items-center justify-between gap-3">
+                    <div>
+                      <div class="text-sm font-semibold text-gray-500">Prévia do Cupom (76mm)</div>
+                      <div class="text-xs text-gray-500">Ajuste papel/margens no driver da impressora.</div>
+                    </div>
+                    <button id="pdvReceiptRefresh" class="px-3 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 font-extrabold">
+                      Atualizar prévia
+                    </button>
+                  </div>
+
+                  <div class="mt-3 overflow-auto">
+          <div class="receipt-preview mono text-[12px]" id="pdvReceiptPreview"></div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: DELIVERY (PÚBLICO) -->
+        <div id="tabDelivery" class="tabPanel hidden">
+          <div class="rounded-2xl border bg-white p-5">
+            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+              <div>
+                <h2 class="text-2xl font-extrabold text-purple-800">Delivery (Público)</h2>
+                <p class="text-sm text-gray-600 mt-1">
+                  Visualização da loja: base + complementos + total em tempo real + envio por WhatsApp. (Opcional: Pix via API).
+                </p>
+              </div>
+              <div class="flex gap-2">
+                <button id="shopReload" class="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 font-extrabold">Recarregar</button>
+                <button id="shopSendWA" class="px-4 py-2 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-extrabold">Enviar WhatsApp</button>
+              </div>
+            </div>
+
+            <div class="mt-5 grid lg:grid-cols-12 gap-4">
+              <div class="lg:col-span-7 rounded-2xl border p-4">
+                <div class="text-sm font-semibold text-gray-500">Escolha a base (coleção: produtos)</div>
+                <div class="text-xs text-gray-500 mt-1">Clique em uma base para iniciar.</div>
+                <div id="shopBases" class="mt-3 grid sm:grid-cols-2 gap-3"></div>
+
+                <div class="mt-5 text-sm font-semibold text-gray-500">Complementos (coleção: complementos)</div>
+                <div class="text-xs text-gray-500 mt-1">Marque os adicionais para montar o pedido.</div>
+                <div id="shopComplements" class="mt-3 grid sm:grid-cols-2 gap-3"></div>
+
+                <div class="mt-5 text-sm font-semibold text-gray-500">Adicionais grátis (até 4)</div>
+                <div class="text-xs text-gray-500 mt-1">Escolha até 4 adicionais gratuitos por pedido.</div>
+                <div id="shopFreeAddons" class="mt-3 grid sm:grid-cols-2 gap-3"></div>
+              </div>
+
+              <div class="lg:col-span-5 rounded-2xl border p-4 bg-gray-50">
+                <div class="text-sm font-semibold text-gray-500">Resumo</div>
+
+                <div class="mt-3 rounded-xl border bg-white p-3">
+                  <div class="text-xs text-gray-500">Base</div>
+                  <div class="font-extrabold" id="shopBaseLabel">—</div>
+                  <div class="text-xs text-gray-500 mt-3">Complementos</div>
+                  <div class="text-sm text-gray-700" id="shopCompList">—</div>
+                  <div class="text-xs text-gray-500 mt-3">Adicionais grátis</div>
+                  <div class="text-sm text-gray-700" id="shopFreeList">—</div>
+                  <div class="mt-3 flex items-center justify-between">
+                    <div class="text-sm font-extrabold text-gray-800">Total</div>
+                    <div class="text-lg font-extrabold text-purple-800" id="shopTotal">R$ 0,00</div>
+                  </div>
+                </div>
+
+                <div class="mt-3 grid gap-2">
+                  <input id="shopName" class="w-full border rounded-xl px-3 py-2" placeholder="Seu nome (opcional)">
+                  <input id="shopPhone" class="w-full border rounded-xl px-3 py-2" placeholder="Telefone (opcional)">
+                  <textarea id="shopObs" class="w-full border rounded-xl px-3 py-2" rows="3" placeholder="Observações (opcional)"></textarea>
+                </div>
+
+                <div class="mt-3 grid grid-cols-2 gap-2">
+                  <button id="shopPix" class="px-4 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 font-extrabold">
+                    Gerar Pix (API)
+                  </button>
+                  <button id="shopReset" class="px-4 py-3 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-extrabold">
+                    Limpar
+                  </button>
+                </div>
+
+                <div class="mt-3 hidden rounded-xl border bg-white p-3" id="shopPixBox">
+                  <div class="text-sm font-extrabold text-gray-800">Pix</div>
+                  <div class="text-xs text-gray-500 mt-1">Este QR depende do seu endpoint Pix (backend). Ajuste em Configurações.</div>
+                  <img id="shopPixQr" alt="QR Pix" class="mt-3 w-full rounded-xl border" />
+                </div>
+
+                <div class="text-xs text-gray-500 mt-2" id="shopStatus"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: ADMIN (LOJA) -->
+        <div id="tabAdmin" class="tabPanel hidden">
+          <div class="rounded-2xl border bg-white p-5">
+            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+              <div>
+                <h2 class="text-2xl font-extrabold text-purple-800">Admin (Loja)</h2>
+                <p class="text-sm text-gray-600 mt-1">CRUD de Produtos, Complementos, Cupons e lista de Pedidos. (Requer login.)</p>
+              </div>
+              <div class="flex gap-2">
+                <button id="adminReload" class="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 font-extrabold">Recarregar</button>
+              </div>
+            </div>
+
+            <div class="mt-5 grid lg:grid-cols-12 gap-4">
+              <!-- CRUD -->
+              <div class="lg:col-span-7 space-y-4">
+                <!-- Produtos -->
+                <div class="rounded-2xl border p-4">
+                  <div class="flex items-center justify-between gap-3">
+                    <div>
+                      <div class="text-sm font-semibold text-gray-500">Produtos (produtos)</div>
+                      <div class="text-xs text-gray-500">Base do açaí / tamanhos / itens principais.</div>
+                    </div>
+                  </div>
+
+                  <form id="formProduct" class="mt-3 grid md:grid-cols-3 gap-2">
+                    <input id="prodName" class="border rounded-xl px-3 py-2" placeholder="Nome (ex: Açaí 500ml)" required>
+                    <input id="prodPrice" type="number" step="0.01" min="0" class="border rounded-xl px-3 py-2" placeholder="Preço (ex: 18.90)" required>
+                    <button class="rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-extrabold px-4 py-2">Adicionar</button>
+                  </form>
+
+                  <div id="adminProducts" class="mt-3 grid sm:grid-cols-2 gap-3"></div>
+                </div>
+
+                <!-- Complementos -->
+                <div class="rounded-2xl border p-4">
+                  <div class="text-sm font-semibold text-gray-500">Complementos (complementos)</div>
+                  <form id="formComp" class="mt-3 grid md:grid-cols-3 gap-2">
+                    <input id="compName" class="border rounded-xl px-3 py-2" placeholder="Nome (ex: Granola)" required>
+                    <input id="compPrice" type="number" step="0.01" min="0" class="border rounded-xl px-3 py-2" placeholder="Preço (ex: 2.50)" required>
+                    <button class="rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-extrabold px-4 py-2">Adicionar</button>
+                  </form>
+                  <div id="adminComps" class="mt-3 grid sm:grid-cols-2 gap-3"></div>
+                </div>
+
+                <!-- Cupons -->
+                <div class="rounded-2xl border p-4">
+                  <div class="text-sm font-semibold text-gray-500">Cupons (cupons)</div>
+                  <form id="formCoupon" class="mt-3 grid md:grid-cols-4 gap-2">
+                    <input id="couponCode" class="border rounded-xl px-3 py-2" placeholder="Código (ACAI10)" required>
+                    <select id="couponType" class="border rounded-xl px-3 py-2">
+                      <option value="percentual">Percentual</option>
+                      <option value="fixo">Fixo (R$)</option>
+                    </select>
+                    <input id="couponValue" type="number" step="0.01" min="0" class="border rounded-xl px-3 py-2" placeholder="Valor (10 ou 5.00)" required>
+                    <button class="rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-extrabold px-4 py-2">Adicionar</button>
+                  </form>
+                  <div id="adminCoupons" class="mt-3 grid sm:grid-cols-2 gap-3"></div>
+                </div>
+              </div>
+
+              <!-- Pedidos -->
+              <div class="lg:col-span-5 rounded-2xl border p-4 bg-gray-50">
+                <div class="flex items-center justify-between gap-3">
+                  <div>
+                    <div class="text-sm font-semibold text-gray-500">Pedidos (pedidos)</div>
+                    <div class="text-xs text-gray-500">Delivery + PDV (canal).</div>
+                  </div>
+                </div>
+                <div id="adminOrders" class="mt-3 space-y-2"></div>
+              </div>
+            </div>
+
+            <div class="text-xs text-gray-500 mt-3" id="adminStatus"></div>
+          </div>
+        </div>
+
+        <!-- TAB: LOGIN -->
+        <div id="tabLogin" class="tabPanel hidden">
+          <div class="rounded-2xl border bg-white p-5">
+            <h2 class="text-2xl font-extrabold text-purple-800">Login / Acesso</h2>
+            <p class="text-sm text-gray-600 mt-1">Login único (Firebase Auth). Permissões via Firestore (usuarios).</p>
+
+            <div class="mt-5 grid md:grid-cols-12 gap-4">
+              <div class="md:col-span-7 rounded-2xl border p-4">
+                <div class="text-sm font-semibold text-gray-500">Entrar</div>
+                <form id="formLogin" class="mt-3 grid gap-2">
+                  <input id="loginEmail" type="email" class="border rounded-xl px-3 py-2" placeholder="Email" required>
+                  <input id="loginPass" type="password" class="border rounded-xl px-3 py-2" placeholder="Senha" required>
+                  <button class="rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-extrabold px-4 py-2">Entrar</button>
+                </form>
+                <div class="text-xs text-gray-500 mt-3" id="loginStatus"></div>
+              </div>
+
+              <div class="md:col-span-5 rounded-2xl border p-4 bg-gray-50">
+                <div class="text-sm font-semibold text-gray-500">Como funciona a permissão</div>
+                <div class="text-xs text-gray-600 mt-2 space-y-2">
+                  <div><b>usuarios</b> (coleção) define:</div>
+                  <ul class="list-disc pl-5">
+                    <li><span class="mono">uid</span> (do Auth)</li>
+                    <li><span class="mono">role</span>: <b>admin</b></li>
+                    <li><span class="mono">clienteId</span> (obrigatório)</li>
+                  </ul>
+                  <div class="mt-2">Exemplo doc (usuarios/{uid}):</div>
+                  <pre class="mono text-[11px] bg-white border rounded-xl p-2 overflow-auto">{
+  "role": "admin",
+  "clienteId": "acai-do-joao"
+}</pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: CONFIG -->
+        <div id="tabConfig" class="tabPanel hidden">
+          <div class="rounded-2xl border bg-white p-5">
+            <h2 class="text-2xl font-extrabold text-purple-800">Configurações</h2>
+            <p class="text-sm text-gray-600 mt-1">Tudo dentro deste arquivo: Firebase, clienteId, WhatsApp e endpoint Pix.</p>
+
+            <div class="mt-5 grid lg:grid-cols-12 gap-4">
+              <div class="lg:col-span-7 rounded-2xl border p-4 bg-gray-50">
+                <div class="text-sm font-semibold text-gray-500">Tenant / Loja ativa</div>
+                <div class="text-xs text-gray-600 mt-1">Se você for Admin, isso vem do seu usuário. Você também pode ajustar manualmente para testes locais.</div>
+
+                <div class="mt-3 grid md:grid-cols-3 gap-2">
+                  <input id="cfgClienteId" class="border rounded-xl px-3 py-2" placeholder="clienteId (slug)">
+                  <input id="cfgWhats" class="border rounded-xl px-3 py-2" placeholder="WhatsApp (551199...)">
+                  <input id="cfgPixApi" class="border rounded-xl px-3 py-2" placeholder="Pix API (ex: https://seu-backend/pix)">
+                </div>
+
+                <div class="mt-3 grid md:grid-cols-3 gap-2">
+                  <input id="cfgStoreName" class="border rounded-xl px-3 py-2" placeholder="Nome da loja (ex: Açaí Premium)">
+                  <input id="cfgBrandColor" type="color" class="h-10 w-full border rounded-xl px-3 py-1" value="#7c3aed" title="Cor principal">
+                  <input id="cfgShareLink" class="border rounded-xl px-3 py-2 bg-gray-100" readonly placeholder="Link de compartilhamento">
+                </div>
+
+                <div class="mt-3 flex flex-wrap gap-2">
+                  <button id="cfgCopyShare" class="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 font-extrabold">Copiar link de pedidos</button>
+                </div>
+
+                <div class="mt-3 flex gap-2">
+                  <button id="cfgSave" class="px-4 py-2 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-extrabold">Salvar</button>
+                  <button id="cfgReset" class="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 font-extrabold">Reset</button>
+                </div>
+
+                <div class="text-xs text-gray-500 mt-3">
+                  Dica: compartilhe o link de pedidos para clientes usando o campo acima (abre somente a área Delivery).
+                </div>
+              </div>
+
+              <div class="lg:col-span-5 rounded-2xl border p-4">
+                <div class="text-sm font-semibold text-gray-500">Config Firebase (obrigatório)</div>
+                <div class="text-xs text-gray-600 mt-2">
+                  Abra este arquivo e cole suas credenciais no bloco <span class="mono">firebaseConfig</span> no script (abaixo).
+                  Sem isso, nada conecta.
+                </div>
+
+                <div class="mt-3 rounded-xl bg-gray-50 border p-3 text-xs text-gray-700 space-y-2">
+                  <div><b>Coleções usadas:</b> clientes, usuarios, produtos, complementos, cupons, pedidos</div>
+                  <div><b>Multi-loja:</b> usar <span class="mono">clienteId</span> nos docs e queries filtradas</div>
+                  <div><b>Impressão:</b> cupom 76mm via <span class="mono">window.print()</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+    </div>
+  </main>
+
+  <!-- ÁREA REAL DE IMPRESSÃO -->
+  <div id="receiptPrintArea" class="mono text-[12px]"></div>
+
+  <!-- SCRIPT ÚNICO (Firebase + App) -->
+  <script type="module">
+    /******************************************************************
+     * 1) CONFIGURAÇÕES LOCAIS (SEM ARQUIVOS EXTERNOS)
+     ******************************************************************/
+    const LS = {
+      clienteId: "WL_clienteId",
+      whatsapp:  "WL_whatsapp",
+      pixApi:    "WL_pixApi",
+      storeName: "WL_storeName",
+      brandColor: "WL_brandColor"
     };
 
-    const formatBR = (v) => {
-      const n = Number(v) || 0;
-      return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n);
+    function getCfg() {
+      return {
+        clienteId: localStorage.getItem(LS.clienteId) || "",
+        whatsapp:  localStorage.getItem(LS.whatsapp)  || "5511999999999",
+        pixApi:    localStorage.getItem(LS.pixApi)    || "", // ex: https://seu-backend/pix
+        storeName: localStorage.getItem(LS.storeName) || "",
+        brandColor: localStorage.getItem(LS.brandColor) || "#7c3aed"
+      };
+    }
+    function setCfg(patch) {
+      const cur = getCfg();
+      const next = { ...cur, ...patch };
+      localStorage.setItem(LS.clienteId, next.clienteId || "");
+      localStorage.setItem(LS.whatsapp,  next.whatsapp  || "");
+      localStorage.setItem(LS.pixApi,    next.pixApi    || "");
+      localStorage.setItem(LS.storeName, next.storeName || "");
+      localStorage.setItem(LS.brandColor, next.brandColor || "#7c3aed");
+      syncCfgUI();
+      syncStatusUI();
+      applyBranding();
+    }
+
+    /******************************************************************
+     * 2) FIREBASE (COLE SUAS CREDENCIAIS AQUI)
+     ******************************************************************/
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import {
+      getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+    import {
+      getFirestore,
+      doc, getDoc, setDoc, updateDoc,
+      collection, addDoc,
+      query, where, orderBy, limit,
+      getDocs,
+      onSnapshot,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // COLE AQUI AS CREDENCIAIS DO SEU FIREBASE
+    const firebaseConfig = {
+      apiKey: "SUA_API_KEY",
+      authDomain: "SEU_PROJETO.firebaseapp.com",
+      projectId: "SEU_PROJECT_ID"
+    };
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+
+    /******************************************************************
+     * 3) UI BASE: TABS + STATUS
+     ******************************************************************/
+    const tabBtns   = [...document.querySelectorAll(".tabBtn")];
+    const tabPanels = [...document.querySelectorAll(".tabPanel")];
+
+    function setActiveTab(id) {
+      tabPanels.forEach(p => p.classList.toggle("hidden", p.id !== id));
+      tabBtns.forEach(b => {
+        const active = b.dataset.tab === id;
+        b.classList.toggle("bg-purple-700", active);
+        b.classList.toggle("text-white", active);
+        b.classList.toggle("bg-gray-100", !active);
+      });
+    }
+    tabBtns.forEach(b => b.addEventListener("click", () => setActiveTab(b.dataset.tab)));
+
+    const appSubtitle = document.getElementById("appSubtitle");
+    const userBadge   = document.getElementById("userBadge");
+    const btnSignOut  = document.getElementById("btnSignOut");
+    const lblClienteId = document.getElementById("lblClienteId");
+    const lblRole      = document.getElementById("lblRole");
+    const lblWhatsApp  = document.getElementById("lblWhatsApp");
+    const lblPixApi    = document.getElementById("lblPixApi");
+    const appTitle     = document.getElementById("appTitle");
+    const mainSection  = document.querySelector("section");
+    const sidebar      = document.querySelector("aside");
+    const header       = document.querySelector("header");
+
+    const defaultTitle = "Console Único | Delivery + Admin + PDV (Cupom 76mm)";
+    const isDeliveryOnly = new URLSearchParams(window.location.search).get("view") === "delivery";
+
+    let session = {
+      user: null,
+      profile: null,   // usuarios/{uid} => { role, clienteId }
+      role: "guest",   // guest|admin
+      clienteId: "",   // ativo para queries
+      loja: null       // clientes/{clienteId}
     };
 
-    const App = {
-      carrinho: [],
+    function syncStatusUI() {
+      const cfg = getCfg();
+      lblClienteId.textContent = session.clienteId || cfg.clienteId || "—";
+      lblRole.textContent      = session.role || "—";
+      lblWhatsApp.textContent  = cfg.whatsapp || "—";
+      lblPixApi.textContent    = cfg.pixApi ? "OK" : "—";
+      appSubtitle.textContent  = `Tenant: ${session.clienteId || cfg.clienteId || "—"} | Role: ${session.role}`;
+    }
 
-      init() {
-        const hoje = new Date().toISOString().split('T')[0];
-        document.getElementById('v_venc').value = hoje;
-        this.render();
-      },
+    function syncCfgUI() {
+      const cfg = getCfg();
+      document.getElementById("cfgClienteId").value = cfg.clienteId;
+      document.getElementById("cfgWhats").value     = cfg.whatsapp;
+      document.getElementById("cfgPixApi").value    = cfg.pixApi;
+      document.getElementById("cfgStoreName").value = cfg.storeName;
+      document.getElementById("cfgBrandColor").value = cfg.brandColor;
+      document.getElementById("cfgShareLink").value = buildShareLink();
+    }
 
-      cadastrar(tipo) {
-        if (tipo === 'CLI') {
-          const nome = document.getElementById('c_nome').value.trim();
-          const endereco = document.getElementById('c_end').value.trim();
-          if (!nome) return alert('Informe o nome do cliente.');
-          const lista = DB.get('cli');
-          lista.push({ id: Date.now(), nome, endereco });
-          DB.set('cli', lista);
-          document.getElementById('c_nome').value = '';
-          document.getElementById('c_end').value = '';
-          this.render();
-        } else {
-          const nome = document.getElementById('p_nome').value.trim();
-          const precoRaw = document.getElementById('p_preco').value.trim();
-          const preco = precoRaw ? parseFloat(precoRaw.toString().replace(',', '.')) : 0;
-          if (!nome) return alert('Informe o nome do produto.');
-          const lista = DB.get('pro');
-          lista.push({ id: Date.now(), nome, preco: isNaN(preco) ? 0 : preco });
-          DB.set('pro', lista);
-          document.getElementById('p_nome').value = '';
-          document.getElementById('p_preco').value = '';
-          this.render();
-        }
-      },
+    function applyBranding() {
+      const cfg = getCfg();
+      const titleText = cfg.storeName ? `${cfg.storeName} | Delivery + Admin + PDV (Cupom 76mm)` : defaultTitle;
+      appTitle.textContent = titleText;
+      document.documentElement.style.setProperty("--brand-color", cfg.brandColor || "#7c3aed");
+      document.documentElement.style.setProperty("--brand-color-dark", cfg.brandColor || "#6d28d9");
+    }
 
-      excluirCadastro(tipo, id) {
-        if (!confirm("Apagar do cadastro?")) return;
-        const chave = tipo === 'CLI' ? 'cli' : 'pro';
-        DB.set(chave, DB.get(chave).filter(i => i.id !== id));
-        this.render();
-      },
+    function buildShareLink() {
+      const base = `${window.location.origin}${window.location.pathname}`;
+      return `${base}?view=delivery`;
+    }
 
-      venda: {
-        add() {
-          const prodSel = document.getElementById('v_prod');
-          const p = prodSel.value;
-          const q = parseFloat(document.getElementById('v_qtd').value) || 1;
-          let vRaw = document.getElementById('v_prc').value.trim();
-
-          // If price not provided, try product price
-          let v;
-          if (vRaw) {
-            v = parseFloat(vRaw.replace(',', '.'));
-          } else {
-            const pro = DB.get('pro').find(pp => pp.nome === p);
-            v = pro ? Number(pro.preco) : NaN;
-          }
-          if (!p || isNaN(v) || v <= 0) return alert('Produto ou preço inválido.');
-          App.carrinho.push({ p, q, t: Number((q * v).toFixed(2)) });
-          document.getElementById('v_preview').innerText = "Carrinho: " + App.carrinho.map(i => `${i.q}x ${i.p}`).join(', ');
-        },
-        fechar() {
-          const cli = document.getElementById('v_cli').value.trim();
-          const end = document.getElementById('v_end').value.trim();
-          const venc = document.getElementById('v_venc').value;
-          if (!cli) return alert('Informe o cliente.');
-          if (App.carrinho.length === 0) return alert("Carrinho vazio!");
-          const total = App.carrinho.reduce((a, b) => a + b.t, 0).toFixed(2);
-
-          const mov = {
-            id: Date.now(),
-            data: new Date().toISOString(),
-            cli, end, venc,
-            val: total,
-            desc: App.carrinho.map(i => `${i.q}x ${i.p}`).join(', '),
-            status: (venc === new Date().toISOString().split('T')[0]) ? 'PAGO' : 'ABERTO',
-            motivo: (venc === new Date().toISOString().split('T')[0]) ? 'Venda à Vista' : 'Boleto/Prazo'
-          };
-
-          const hist = DB.get('mov'); hist.push(mov); DB.set('mov', hist);
-
-          // Print
-          document.getElementById('p_cli').innerText = cli;
-          document.getElementById('p_end').innerText = end;
-          document.getElementById('p_venc').innerText = new Date(venc).toLocaleDateString();
-          document.getElementById('p_itens').innerHTML = App.carrinho.map(i => `<div>${i.q}x ${i.p} - ${formatBR(i.t)}</div>`).join('');
-          document.getElementById('p_total').innerText = formatBR(total);
-          window.print();
-
-          // reset cart and UI
-          App.carrinho = [];
-          document.getElementById('v_preview').innerText = '';
-          document.getElementById('v_prc').value = '';
-          document.getElementById('v_qtd').value = 1;
-          this_render = App; // no-op to avoid linter warning inlined
-          App.render();
-        }
-      },
-
-      baixarBoleto(id) {
-        const motivo = prompt("Motivo do Pagamento (Ex: Pix, Dinheiro, Transferência):", "Pix");
-        if (motivo === null) return;
-        const hist = DB.get('mov');
-        const idx = hist.findIndex(m => m.id === id);
-        if (idx === -1) return;
-        hist[idx].status = 'PAGO';
-        hist[idx].motivo = motivo;
-        DB.set('mov', hist);
-        this.render();
-      },
-
-      apagarNota(id) {
-        if (!confirm("ATENÇÃO: Deseja apagar esta nota permanentemente? Isso alterará seu saldo financeiro.")) return;
-        const hist = DB.get('mov').filter(m => m.id !== id);
-        DB.set('mov', hist);
-        this.render();
-      },
-
-      render() {
-        const movs = DB.get('mov').slice().reverse();
-        const clis = DB.get('cli');
-        const pros = DB.get('pro');
-
-        const vTot = movs.reduce((a,b) => a + parseFloat(b.val || 0), 0);
-        const pTot = movs.filter(m => m.status === 'PAGO').reduce((a,b) => a + parseFloat(b.val || 0), 0);
-        document.getElementById('dash_total_vendas').innerText = formatBR(vTot);
-        document.getElementById('dash_total_pago').innerText = formatBR(pTot);
-        document.getElementById('dash_saldo_devedor').innerText = formatBR(vTot - pTot);
-
-        document.getElementById('lista_clientes').innerHTML = clis.map(c => `<div class="item"><div><strong>${c.nome}</strong><br><small>${c.endereco || ''}</small></div><div><button onclick="document.getElementById('v_cli').value='${c.nome}'; document.getElementById('v_end').value='${c.endereco || ''}'" style="background:var(--success); color:white">✅</button><button onclick="App.excluirCadastro('CLI', ${c.id})" class="btn-del">🗑️</button></div></div>`).join('');
-        document.getElementById('lista_produtos').innerHTML = pros.map(p => `<div class="item"><span>${p.nome} ${p.preco ? `- ${formatBR(p.preco)}` : ''}</span><div><button onclick="document.getElementById('v_prod').value='${p.nome}'; document.getElementById('v_prc').value='${p.preco ? p.preco : ''}'" style="background:#6c5ce7; color:white">🛒</button><button onclick="App.excluirCadastro('PRO', ${p.id})" class="btn-del">🗑️</button></div></div>`).join('');
-
-        // populate product select
-        const sel = document.getElementById('v_prod');
-        sel.innerHTML = `<option value="">Selecione o produto</option>` + pros.map(p => `<option value="${p.nome}">${p.nome}${p.preco ? ' - ' + formatBR(p.preco) : ''}</option>`).join('');
-
-        document.getElementById('lista_mov').innerHTML = movs.map(m => `
-          <tr>
-            <td>${new Date(m.data).toLocaleDateString()}</td>
-            <td><strong>${m.cli}</strong></td>
-            <td>${formatBR(m.val)}</td>
-            <td><span class="status-${m.status.toLowerCase()}">${m.status}</span><br><small>${m.motivo || ''}</small></td>
-            <td>
-              ${m.status === 'ABERTO' ? `<button class="btn-quitar" onclick="App.baixarBoleto(${m.id})">QUITAR</button>` : ''}
-              <button class="btn-del" onclick="App.apagarNota(${m.id})">🗑️ APAGAR</button>
-            </td>
-          </tr>`).join('');
+    function applyDeliveryOnlyMode() {
+      if (!isDeliveryOnly) return;
+      setActiveTab("tabDelivery");
+      if (sidebar) sidebar.classList.add("hidden");
+      if (header) header.classList.add("hidden");
+      if (mainSection) {
+        mainSection.classList.remove("lg:col-span-9");
+        mainSection.classList.add("lg:col-span-12");
       }
-    };
+      tabBtns.forEach(b => {
+        if (b.dataset.tab !== "tabDelivery") b.classList.add("hidden");
+      });
+    }
 
-    const Manager = {
-      exportar() {
-        const d = { cli: DB.get('cli'), pro: DB.get('pro'), mov: DB.get('mov') };
-        const json = JSON.stringify(d, null, 2);
-        const blob = new Blob([json], { type: 'application/json;charset=utf-8' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `IMP_MORANGOS_BACKUP_${new Date().toISOString().slice(0,10)}.json`;
-        a.click();
-      },
-      importar(input) {
-        const file = input.files[0];
-        if (!file) return;
-        const fr = new FileReader();
-        fr.onload = (e) => {
-          try {
-            const d = JSON.parse(e.target.result);
-            if (!d) throw new Error('Arquivo inválido');
-            DB.set('cli', d.cli || []);
-            DB.set('pro', d.pro || []);
-            DB.set('mov', d.mov || []);
-            alert('Backup restaurado com sucesso!');
-            location.reload();
-          } catch (err) {
-            alert('Falha ao restaurar: arquivo inválido.');
-            console.error(err);
-          }
-        };
-        fr.readAsText(file);
+    btnSignOut.addEventListener("click", async () => {
+      await signOut(auth);
+      location.reload();
+    });
+
+    /******************************************************************
+     * 4) HELPERS
+     ******************************************************************/
+    function money(v) {
+      return (Number(v) || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    }
+
+    function escapeHtml(str) {
+      return String(str || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function requireRole(minRole) {
+      const rank = { guest: 0, admin: 1 };
+      return (rank[session.role] || 0) >= (rank[minRole] || 0);
+    }
+
+    function activeClienteId() {
+      // prioridade: sessão (perfil) > config local
+      return session.clienteId || getCfg().clienteId || "";
+    }
+
+    /******************************************************************
+     * 5) AUTH + PERFIL (usuarios/{uid})
+     ******************************************************************/
+    async function loadProfile(uid) {
+      const ref = doc(db, "usuarios", uid);
+      const snap = await getDoc(ref);
+      if (!snap.exists()) return null;
+      return snap.data();
+    }
+
+    async function loadLoja(clienteId) {
+      if (!clienteId) return null;
+      const ref = doc(db, "clientes", clienteId);
+      const snap = await getDoc(ref);
+      if (!snap.exists()) return null;
+      return snap.data();
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+      session.user = user || null;
+      if (!user) {
+        session.profile = null;
+        session.role = "guest";
+        session.clienteId = "";
+        session.loja = null;
+        userBadge.textContent = "Desconectado";
+        btnSignOut.classList.add("hidden");
+        syncStatusUI();
+
+        // libera apenas PDV/Delivery/Config por padrão (PDV pode usar sem login, se quiser)
+        return;
       }
-    };
 
-    const Relatorio = {
-      gerar() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        const movs = DB.get('mov') || [];
-        doc.text("RELATÓRIO IMPÉRIO MORANGOS", 14, 15);
-        doc.autoTable({
-          startY: 25,
-          head: [['Data', 'Cliente', 'Valor', 'Status', 'Motivo']],
-          body: movs.map(m => [new Date(m.data).toLocaleDateString(), m.cli, formatBR(m.val), m.status, m.motivo || ''])
+      btnSignOut.classList.remove("hidden");
+      userBadge.textContent = user.email || "Logado";
+
+      const profile = await loadProfile(user.uid);
+      session.profile = profile;
+      session.role = (profile && profile.role) ? profile.role : "admin"; // fallback
+      session.clienteId = (profile && profile.clienteId) ? profile.clienteId : (getCfg().clienteId || "");
+      session.loja = await loadLoja(session.clienteId);
+
+      // se a loja tiver whatsapp/pix configurados, opcionalmente sobrescreve config local (não obrigatório)
+      if (session.loja) {
+        const cfg = getCfg();
+        setCfg({
+          clienteId: session.clienteId || cfg.clienteId,
+          whatsapp: session.loja.whatsapp || cfg.whatsapp,
+          pixApi: cfg.pixApi // não sobrescreve automaticamente
         });
-        doc.save("Relatorio.pdf");
       }
+
+      syncStatusUI();
+
+      // auto reload dados após login
+      await bootAll();
+    });
+
+    /******************************************************************
+     * 6) CONFIG UI
+     ******************************************************************/
+    document.getElementById("cfgSave").addEventListener("click", () => {
+      setCfg({
+        clienteId: document.getElementById("cfgClienteId").value.trim(),
+        whatsapp:  document.getElementById("cfgWhats").value.trim(),
+        pixApi:    document.getElementById("cfgPixApi").value.trim(),
+        storeName: document.getElementById("cfgStoreName").value.trim(),
+        brandColor: document.getElementById("cfgBrandColor").value.trim() || "#7c3aed"
+      });
+      alert("Configurações salvas.");
+      bootAll();
+    });
+
+    document.getElementById("cfgReset").addEventListener("click", () => {
+      localStorage.removeItem(LS.clienteId);
+      localStorage.removeItem(LS.whatsapp);
+      localStorage.removeItem(LS.pixApi);
+      localStorage.removeItem(LS.storeName);
+      localStorage.removeItem(LS.brandColor);
+      syncCfgUI();
+      syncStatusUI();
+      applyBranding();
+      bootAll();
+    });
+
+    document.getElementById("cfgCopyShare").addEventListener("click", async () => {
+      const link = buildShareLink();
+      try {
+        await navigator.clipboard.writeText(link);
+        alert("Link copiado!");
+      } catch (e) {
+        document.getElementById("cfgShareLink").focus();
+        document.getElementById("cfgShareLink").select();
+        document.execCommand("copy");
+        alert("Link copiado!");
+      }
+    });
+
+    /******************************************************************
+     * 7) LOGIN UI
+     ******************************************************************/
+    const loginStatus = document.getElementById("loginStatus");
+    document.getElementById("formLogin").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      loginStatus.textContent = "Entrando…";
+      try {
+        const email = document.getElementById("loginEmail").value.trim();
+        const pass  = document.getElementById("loginPass").value.trim();
+        await signInWithEmailAndPassword(auth, email, pass);
+        loginStatus.textContent = "Logado com sucesso.";
+        setActiveTab("tabPDV");
+      } catch (err) {
+        console.error(err);
+        loginStatus.textContent = "Falha no login. Verifique email/senha e Auth no Firebase.";
+      }
+    });
+
+    /******************************************************************
+     * 8) QUERIES PADRÃO (multi-loja)
+     ******************************************************************/
+    async function listDocs(colName, { filterCliente = true, order = null, max = 100 } = {}) {
+      const cid = activeClienteId();
+      const colRef = collection(db, colName);
+      let q = null;
+
+      if (filterCliente && cid) {
+        q = query(colRef, where("clienteId", "==", cid));
+      } else {
+        q = query(colRef);
+      }
+
+      if (order) q = query(q, orderBy(order.field, order.dir || "desc"), limit(max));
+      else q = query(q, limit(max));
+
+      const snap = await getDocs(q);
+      const out = [];
+      snap.forEach(d => out.push({ id: d.id, ...d.data() }));
+      return out;
+    }
+
+    /******************************************************************
+     * 9) PDV (produtos + cupons + pedidos + cupom 76mm)
+     ******************************************************************/
+    const pdv = {
+      products: [],
+      cart: [],
+      coupon: null
     };
 
-    document.addEventListener('DOMContentLoaded', () => App.init());
+    const pdvProducts  = document.getElementById("pdvProducts");
+    const pdvCart      = document.getElementById("pdvCart");
+    const pdvSearch    = document.getElementById("pdvSearch");
+    const pdvCoupon    = document.getElementById("pdvCoupon");
+    const pdvDiscount  = document.getElementById("pdvDiscount");
+    const pdvPay       = document.getElementById("pdvPay");
+    const pdvReceived  = document.getElementById("pdvReceived");
+    const pdvSubtotal  = document.getElementById("pdvSubtotal");
+    const pdvDiscounts = document.getElementById("pdvDiscounts");
+    const pdvTotal     = document.getElementById("pdvTotal");
+    const pdvChange    = document.getElementById("pdvChange");
+    const pdvStatus    = document.getElementById("pdvStatus");
+    const pdvReceiptPreview = document.getElementById("pdvReceiptPreview");
+    const receiptPrintArea  = document.getElementById("receiptPrintArea");
+
+    document.getElementById("pdvReload").addEventListener("click", async () => { await pdvLoadProducts(); });
+    document.getElementById("pdvNew").addEventListener("click", () => pdvNewSale());
+    document.getElementById("pdvPrint").addEventListener("click", () => pdvPrintReceipt(pdvReceiptObject()));
+    document.getElementById("pdvFinish").addEventListener("click", async () => { await pdvFinish(); });
+    document.getElementById("pdvReceiptRefresh").addEventListener("click", () => pdvReceiptRefresh());
+
+    pdvSearch.addEventListener("input", () => pdvRenderProducts());
+    pdvDiscount.addEventListener("input", () => pdvTotals());
+    pdvPay.addEventListener("change", () => pdvTotals());
+    pdvReceived.addEventListener("input", () => pdvTotals());
+    pdvCoupon.addEventListener("change", async () => { await pdvApplyCoupon(); });
+
+    function pdvNewSale() {
+      pdv.cart = [];
+      pdv.coupon = null;
+      pdvCoupon.value = "";
+      pdvDiscount.value = "";
+      pdvReceived.value = "";
+      pdvPay.value = "pix";
+      pdvStatus.textContent = "Nova venda iniciada.";
+      pdvRenderCart();
+      pdvTotals();
+      pdvReceiptRefresh();
+    }
+
+    async function pdvLoadProducts() {
+      pdvStatus.textContent = "Carregando produtos…";
+      try {
+        const cid = activeClienteId();
+        const colRef = collection(db, "produtos");
+        const q = cid ? query(colRef, where("clienteId", "==", cid)) : query(colRef);
+        const snap = await getDocs(q);
+
+        pdv.products = [];
+        snap.forEach(d => {
+          const x = d.data();
+          if (x.ativo === false) return;
+          pdv.products.push({ id: d.id, nome: x.nome || "Produto", preco: Number(x.preco || 0) });
+        });
+
+        pdvRenderProducts();
+        pdvStatus.textContent = `Produtos carregados: ${pdv.products.length}`;
+      } catch (e) {
+        console.error(e);
+        pdvStatus.textContent = "Falha ao carregar produtos. Verifique Firebase/config e regras do Firestore.";
+      }
+    }
+
+    function pdvRenderProducts() {
+      const term = (pdvSearch.value || "").trim().toLowerCase();
+      const list = term ? pdv.products.filter(p => p.nome.toLowerCase().includes(term)) : pdv.products;
+
+      pdvProducts.innerHTML = "";
+      if (!list.length) {
+        pdvProducts.innerHTML = `<div class="text-sm text-gray-500">Nenhum produto encontrado.</div>`;
+        return;
+      }
+
+      list.forEach(p => {
+        const el = document.createElement("button");
+        el.className = "card text-left rounded-2xl border p-4 bg-white hover:bg-purple-50";
+        el.innerHTML = `
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <div class="font-extrabold text-purple-800">${escapeHtml(p.nome)}</div>
+              <div class="text-xs text-gray-600">Clique para adicionar</div>
+            </div>
+            <div class="font-extrabold">${money(p.preco)}</div>
+          </div>
+        `;
+        el.addEventListener("click", () => pdvAdd(p));
+        pdvProducts.appendChild(el);
+      });
+    }
+
+    function pdvAdd(p) {
+      const it = pdv.cart.find(i => i.id === p.id);
+      if (it) it.qtd += 1;
+      else pdv.cart.push({ id: p.id, nome: p.nome, preco: p.preco, qtd: 1 });
+      pdvRenderCart(); pdvTotals(); pdvReceiptRefresh();
+    }
+
+    function pdvInc(id){ const it = pdv.cart.find(i => i.id===id); if(!it) return; it.qtd++; pdvRenderCart(); pdvTotals(); pdvReceiptRefresh(); }
+    function pdvDec(id){ const it = pdv.cart.find(i => i.id===id); if(!it) return; it.qtd--; if(it.qtd<=0) pdv.cart = pdv.cart.filter(i=>i.id!==id); pdvRenderCart(); pdvTotals(); pdvReceiptRefresh(); }
+    function pdvRm (id){ pdv.cart = pdv.cart.filter(i=>i.id!==id); pdvRenderCart(); pdvTotals(); pdvReceiptRefresh(); }
+
+    function pdvRenderCart() {
+      pdvCart.innerHTML = "";
+      if (!pdv.cart.length) {
+        pdvCart.innerHTML = `<tr><td colspan="4" class="px-3 py-4 text-center text-gray-500">Carrinho vazio</td></tr>`;
+        return;
+      }
+      pdv.cart.forEach(it => {
+        const tr = document.createElement("tr");
+        tr.className = "border-t";
+        tr.innerHTML = `
+          <td class="px-3 py-2">
+            <div class="font-bold">${escapeHtml(it.nome)}</div>
+            <div class="text-xs text-gray-500">${money(it.preco)} un.</div>
+          </td>
+          <td class="px-3 py-2 text-center">
+            <div class="inline-flex items-center gap-2">
+              <button class="px-2 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 font-extrabold" data-act="dec">-</button>
+              <span class="font-extrabold">${it.qtd}</span>
+              <button class="px-2 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 font-extrabold" data-act="inc">+</button>
+            </div>
+          </td>
+          <td class="px-3 py-2 text-right font-extrabold">${money(it.preco * it.qtd)}</td>
+          <td class="px-2 py-2 text-right">
+            <button class="px-2 py-1 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 font-extrabold" data-act="rm">x</button>
+          </td>
+        `;
+        tr.querySelector("[data-act='inc']").addEventListener("click", () => pdvInc(it.id));
+        tr.querySelector("[data-act='dec']").addEventListener("click", () => pdvDec(it.id));
+        tr.querySelector("[data-act='rm']").addEventListener("click", () => pdvRm(it.id));
+        pdvCart.appendChild(tr);
+      });
+    }
+
+    function pdvSubtotalVal() { return pdv.cart.reduce((s,i)=>s+(i.preco*i.qtd),0); }
+
+    async function pdvApplyCoupon() {
+      const code = (pdvCoupon.value || "").trim().toUpperCase();
+      pdv.coupon = null;
+      if (!code) { pdvTotals(); pdvReceiptRefresh(); return; }
+      try {
+        const colRef = collection(db, "cupons");
+        const snap = await getDocs(query(colRef, where("codigo", "==", code)));
+        if (snap.empty) { pdvStatus.textContent = "Cupom não encontrado."; pdvTotals(); pdvReceiptRefresh(); return; }
+        let c = null; snap.forEach(d => c = ({ id: d.id, ...d.data() }));
+        if (!c || c.ativo === false) { pdvStatus.textContent = "Cupom inativo."; pdvTotals(); pdvReceiptRefresh(); return; }
+        const cid = activeClienteId();
+        if (cid && c.clienteId && c.clienteId !== cid) { pdvStatus.textContent = "Cupom não pertence a esta loja."; pdvTotals(); pdvReceiptRefresh(); return; }
+        pdv.coupon = c;
+        pdvStatus.textContent = `Cupom aplicado: ${code}`;
+        pdvTotals(); pdvReceiptRefresh();
+      } catch (e) {
+        console.error(e);
+        pdvStatus.textContent = "Falha ao validar cupom.";
+      }
+    }
+
+    function pdvCouponDiscount(subtotal) {
+      if (!pdv.coupon) return 0;
+      const tipo = pdv.coupon.tipo || "percentual";
+      const valor = Number(pdv.coupon.valor || 0);
+      if (tipo === "percentual") return subtotal * (valor / 100);
+      return valor;
+    }
+
+    function pdvTotals() {
+      const subtotal = pdvSubtotalVal();
+      const manual = Math.max(0, Number(pdvDiscount.value || 0));
+      const cup = Math.max(0, pdvCouponDiscount(subtotal));
+      const discounts = Math.min(subtotal, manual + cup);
+      const total = Math.max(0, subtotal - discounts);
+
+      const pay = pdvPay.value;
+      const received = Math.max(0, Number(pdvReceived.value || 0));
+      const change = (pay === "dinheiro") ? Math.max(0, received - total) : 0;
+
+      pdvSubtotal.textContent = money(subtotal);
+      pdvDiscounts.textContent = money(discounts);
+      pdvTotal.textContent = money(total);
+      pdvChange.textContent = money(change);
+    }
+
+    function pdvReceiptObject() {
+      const subtotal = pdvSubtotalVal();
+      const manual = Math.max(0, Number(pdvDiscount.value || 0));
+      const cup = Math.max(0, pdvCouponDiscount(subtotal));
+      const discounts = Math.min(subtotal, manual + cup);
+      const total = Math.max(0, subtotal - discounts);
+
+      const pay = pdvPay.value;
+      const received = Math.max(0, Number(pdvReceived.value || 0));
+      const change = (pay === "dinheiro") ? Math.max(0, received - total) : 0;
+
+      const cfg = getCfg();
+      const lojaNome = (session.loja && session.loja.nome) ? session.loja.nome : (cfg.storeName || "Açaí Premium");
+      const lojaTel  = (session.loja && session.loja.whatsapp) ? session.loja.whatsapp : getCfg().whatsapp;
+
+      return {
+        loja: { nome: lojaNome, telefone: lojaTel, cnpj: "", endereco: "" },
+        venda: {
+          data: new Date(),
+          itens: pdv.cart.map(i => ({ nome: i.nome, qtd: i.qtd, preco: i.preco })),
+          subtotal, descontos: discounts, total,
+          pagamento: pay, recebido: received, troco: change,
+          cupom: (pdvCoupon.value || "").trim().toUpperCase() || null
+        }
+      };
+    }
+
+    function receiptHtml(c) {
+      const dtStr = c.venda.data.toLocaleString("pt-BR");
+      const payLabel = c.venda.pagamento === "pix" ? "PIX" : (c.venda.pagamento === "dinheiro" ? "DINHEIRO" : "CARTÃO");
+
+      const itensHtml = c.venda.itens.map(it => {
+        const linha = `${it.qtd}x ${it.nome}`;
+        const val = it.qtd * it.preco;
+        return `
+          <div class="receipt-line">
+            <div style="max-width:52mm; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(linha)}</div>
+            <div>${money(val)}</div>
+          </div>`;
+      }).join("");
+
+      return `
+        <div class="mono" style="width:76mm;">
+          <div style="text-align:center; font-weight:800; font-size:14px;">${escapeHtml(c.loja.nome)}</div>
+          ${c.loja.cnpj ? `<div style="text-align:center;">CNPJ: ${escapeHtml(c.loja.cnpj)}</div>` : ""}
+          ${c.loja.endereco ? `<div style="text-align:center;">${escapeHtml(c.loja.endereco)}</div>` : ""}
+          ${c.loja.telefone ? `<div style="text-align:center;">Tel/Whats: ${escapeHtml(c.loja.telefone)}</div>` : ""}
+          <div class="receipt-hr"></div>
+
+          <div style="display:flex; justify-content:space-between;"><div>Data/Hora</div><div>${escapeHtml(dtStr)}</div></div>
+
+          <div class="receipt-hr"></div>
+
+          ${itensHtml}
+
+          <div class="receipt-hr"></div>
+
+          <div class="receipt-line"><div>Subtotal</div><div>${money(c.venda.subtotal)}</div></div>
+          <div class="receipt-line"><div>Descontos</div><div>${money(c.venda.descontos)}</div></div>
+          <div class="receipt-line" style="font-weight:800;"><div>TOTAL</div><div>${money(c.venda.total)}</div></div>
+
+          <div class="receipt-hr"></div>
+
+          <div class="receipt-line"><div>Pagamento</div><div>${payLabel}</div></div>
+          ${c.venda.pagamento === "dinheiro" ? `
+            <div class="receipt-line"><div>Recebido</div><div>${money(c.venda.recebido)}</div></div>
+            <div class="receipt-line"><div>Troco</div><div>${money(c.venda.troco)}</div></div>` : ""}
+
+          ${c.venda.cupom ? `<div class="receipt-hr"></div><div style="text-align:center;">Cupom: <b>${escapeHtml(c.venda.cupom)}</b></div>` : ""}
+
+          <div class="receipt-hr"></div>
+          <div style="text-align:center;">Obrigado e volte sempre!</div>
+          <div style="text-align:center; font-size:11px; margin-top:4px;">(Cupom não fiscal)</div>
+        </div>`;
+    }
+
+    function pdvReceiptRefresh() {
+      pdvReceiptPreview.innerHTML = receiptHtml(pdvReceiptObject());
+    }
+
+    function pdvPrintReceipt(c) {
+      receiptPrintArea.innerHTML = receiptHtml(c);
+      window.print();
+    }
+
+    async function pdvFinish() {
+      if (!pdv.cart.length) { pdvStatus.textContent = "Carrinho vazio."; return; }
+      pdvTotals();
+
+      const r = pdvReceiptObject();
+      const cid = activeClienteId();
+
+      pdvStatus.textContent = "Salvando venda no Firestore…";
+      try {
+        await addDoc(collection(db, "pedidos"), {
+          clienteId: cid || null,
+          canal: "pdv",
+          itens: r.venda.itens,
+          subtotal: r.venda.subtotal,
+          descontos: r.venda.descontos,
+          total: r.venda.total,
+          pagamento: r.venda.pagamento,
+          recebido: r.venda.recebido || 0,
+          troco: r.venda.troco || 0,
+          cupom: r.venda.cupom || null,
+          status: "criado",
+          criadoEm: serverTimestamp()
+        });
+
+        pdvStatus.textContent = "Venda salva. Imprimindo cupom…";
+        pdvReceiptRefresh();
+        pdvPrintReceipt(r);
+        setTimeout(() => pdvNewSale(), 300);
+      } catch (e) {
+        console.error(e);
+        pdvStatus.textContent = "Falha ao salvar venda. Verifique regras do Firestore.";
+      }
+    }
+
+    /******************************************************************
+     * 10) DELIVERY (PÚBLICO) - Monte seu Açaí (produtos + complementos)
+     ******************************************************************/
+    const shop = {
+      bases: [],
+      comps: [],
+      defaultComps: [
+        { id: "banana", nome: "Banana", preco: 2.5 },
+        { id: "morango", nome: "Morango", preco: 3 },
+        { id: "kiwi", nome: "Kiwi", preco: 3 },
+        { id: "uva", nome: "Uva", preco: 3 },
+        { id: "granola", nome: "Granola", preco: 2.5 },
+        { id: "pacoca", nome: "Paçoca", preco: 2.5 },
+        { id: "leite-em-po", nome: "Leite em pó", preco: 3 },
+        { id: "ovomaltine", nome: "Ovomaltine", preco: 4 },
+        { id: "chocolate", nome: "Calda de chocolate", preco: 2.5 },
+        { id: "morango-calda", nome: "Calda de morango", preco: 2.5 },
+        { id: "leite-condensado", nome: "Leite condensado", preco: 2.5 },
+        { id: "doce-de-leite", nome: "Doce de leite", preco: 3 },
+        { id: "nutella", nome: "Nutella", preco: 5 },
+        { id: "mm", nome: "M&M's", preco: 4.5 },
+        { id: "bis", nome: "Bis", preco: 3.5 },
+        { id: "castanha", nome: "Castanha", preco: 3.5 },
+        { id: "coco", nome: "Coco ralado", preco: 2.5 },
+        { id: "amendoim", nome: "Amendoim", preco: 2.5 },
+        { id: "mel", nome: "Mel", preco: 2.5 }
+      ],
+      base: null,
+      selectedComps: new Set(),
+      freeAddons: [
+        { id: "sorvete", nome: "Sorvete (gratuito)" },
+        { id: "leite-condensado", nome: "Leite condensado" },
+        { id: "granulado", nome: "Granulado" },
+        { id: "pacoca", nome: "Paçoca" },
+        { id: "castanha", nome: "Castanha" }
+      ],
+      selectedFree: new Set(),
+      total: 0
+    };
+
+    const shopBases = document.getElementById("shopBases");
+    const shopComplements = document.getElementById("shopComplements");
+    const shopBaseLabel = document.getElementById("shopBaseLabel");
+    const shopCompList  = document.getElementById("shopCompList");
+    const shopFreeAddons = document.getElementById("shopFreeAddons");
+    const shopFreeList  = document.getElementById("shopFreeList");
+    const shopTotal     = document.getElementById("shopTotal");
+    const shopStatus    = document.getElementById("shopStatus");
+    const shopPixBox    = document.getElementById("shopPixBox");
+    const shopPixQr     = document.getElementById("shopPixQr");
+
+    document.getElementById("shopReload").addEventListener("click", async () => shopLoad());
+    document.getElementById("shopReset").addEventListener("click", () => shopReset());
+    document.getElementById("shopSendWA").addEventListener("click", () => shopSendWhatsApp());
+    document.getElementById("shopPix").addEventListener("click", async () => shopGeneratePix());
+
+    function shopReset() {
+      shop.base = null;
+      shop.selectedComps = new Set();
+      shop.selectedFree = new Set();
+      shop.total = 0;
+      shopPixBox.classList.add("hidden");
+      shopRender();
+      shopStatus.textContent = "Pedido limpo.";
+    }
+
+    async function shopLoad() {
+      shopStatus.textContent = "Carregando catálogo…";
+      try {
+        const cid = activeClienteId();
+
+        // bases = produtos
+        const prodRef = collection(db, "produtos");
+        const prodQ = cid ? query(prodRef, where("clienteId", "==", cid)) : query(prodRef);
+        const prodSnap = await getDocs(prodQ);
+        shop.bases = [];
+        prodSnap.forEach(d => {
+          const x = d.data();
+          if (x.ativo === false) return;
+          shop.bases.push({ id: d.id, nome: x.nome || "Base", preco: Number(x.preco || 0) });
+        });
+
+        // complementos
+        const compRef = collection(db, "complementos");
+        const compQ = cid ? query(compRef, where("clienteId", "==", cid)) : query(compRef);
+        const compSnap = await getDocs(compQ);
+        shop.comps = [];
+        compSnap.forEach(d => {
+          const x = d.data();
+          if (x.ativo === false) return;
+          shop.comps.push({ id: d.id, nome: x.nome || "Complemento", preco: Number(x.preco || 0) });
+        });
+        if (!shop.comps.length) {
+          shop.comps = shop.defaultComps.map(c => ({ ...c }));
+        }
+
+        shopRender();
+        shopStatus.textContent = "Catálogo carregado.";
+      } catch (e) {
+        console.error(e);
+        shopStatus.textContent = "Falha ao carregar catálogo. Verifique Firebase/regras.";
+      }
+    }
+
+    function shopComputeTotal() {
+      let t = 0;
+      if (shop.base) t += shop.base.preco;
+      for (const id of shop.selectedComps) {
+        const c = shop.comps.find(x => x.id === id);
+        if (c) t += c.preco;
+      }
+      shop.total = t;
+    }
+
+    function shopRender() {
+      shopComputeTotal();
+
+      // bases
+      shopBases.innerHTML = "";
+      if (!shop.bases.length) shopBases.innerHTML = `<div class="text-sm text-gray-500">Nenhum produto cadastrado.</div>`;
+      shop.bases.forEach(b => {
+        const active = shop.base && shop.base.id === b.id;
+        const el = document.createElement("button");
+        el.className = `card text-left rounded-2xl border p-4 ${active ? "bg-purple-50 border-purple-200" : "bg-white hover:bg-purple-50"}`;
+        el.innerHTML = `
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <div class="font-extrabold text-purple-800">${escapeHtml(b.nome)}</div>
+              <div class="text-xs text-gray-600">Base</div>
+            </div>
+            <div class="font-extrabold">${money(b.preco)}</div>
+          </div>
+        `;
+        el.addEventListener("click", () => { shop.base = b; shopRender(); });
+        shopBases.appendChild(el);
+      });
+
+      // complementos
+      shopComplements.innerHTML = "";
+      if (!shop.comps.length) shopComplements.innerHTML = `<div class="text-sm text-gray-500">Nenhum complemento cadastrado.</div>`;
+      shop.comps.forEach(c => {
+        const checked = shop.selectedComps.has(c.id);
+        const el = document.createElement("label");
+        el.className = `card rounded-2xl border p-4 cursor-pointer ${checked ? "bg-purple-50 border-purple-200" : "bg-white hover:bg-purple-50"}`;
+        el.innerHTML = `
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <div class="font-extrabold text-purple-800">${escapeHtml(c.nome)}</div>
+              <div class="text-xs text-gray-600">Complemento</div>
+            </div>
+            <div class="text-right">
+              <div class="font-extrabold">${money(c.preco)}</div>
+              <div class="text-xs text-gray-500 mt-1">
+                <input type="checkbox" ${checked ? "checked" : ""} />
+              </div>
+            </div>
+          </div>
+        `;
+        el.addEventListener("click", (e) => {
+          // evita duplo toggle em alguns navegadores
+          e.preventDefault();
+          if (shop.selectedComps.has(c.id)) shop.selectedComps.delete(c.id);
+          else shop.selectedComps.add(c.id);
+          shopRender();
+        });
+        shopComplements.appendChild(el);
+      });
+
+      // adicionais grátis
+      shopFreeAddons.innerHTML = "";
+      shop.freeAddons.forEach(a => {
+        const checked = shop.selectedFree.has(a.id);
+        const el = document.createElement("label");
+        el.className = `card rounded-2xl border p-4 cursor-pointer ${checked ? "bg-purple-50 border-purple-200" : "bg-white hover:bg-purple-50"}`;
+        el.innerHTML = `
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <div class="font-extrabold text-purple-800">${escapeHtml(a.nome)}</div>
+              <div class="text-xs text-gray-600">Adicional grátis</div>
+            </div>
+            <div class="text-right">
+              <div class="text-xs text-gray-500 mt-1">
+                <input type="checkbox" ${checked ? "checked" : ""} />
+              </div>
+            </div>
+          </div>
+        `;
+        el.addEventListener("click", (e) => {
+          e.preventDefault();
+          if (shop.selectedFree.has(a.id)) {
+            shop.selectedFree.delete(a.id);
+            shopStatus.textContent = "";
+          } else if (shop.selectedFree.size >= 4) {
+            shopStatus.textContent = "Limite de 4 adicionais grátis por pedido.";
+            return;
+          } else {
+            shop.selectedFree.add(a.id);
+            shopStatus.textContent = "";
+          }
+          shopRender();
+        });
+        shopFreeAddons.appendChild(el);
+      });
+
+      // resumo
+      shopBaseLabel.textContent = shop.base ? `${shop.base.nome} (${money(shop.base.preco)})` : "—";
+      const compList = [...shop.selectedComps].map(id => shop.comps.find(x => x.id === id)).filter(Boolean);
+      shopCompList.textContent = compList.length ? compList.map(x => `${x.nome} (${money(x.preco)})`).join(", ") : "—";
+      const freeList = [...shop.selectedFree].map(id => shop.freeAddons.find(x => x.id === id)).filter(Boolean);
+      shopFreeList.textContent = freeList.length ? freeList.map(x => x.nome).join(", ") : "—";
+      shopTotal.textContent = money(shop.total);
+    }
+
+    function shopSendWhatsApp() {
+      if (!shop.base) { shopStatus.textContent = "Selecione uma base."; return; }
+      const cfg = getCfg();
+      const name = document.getElementById("shopName").value.trim();
+      const phone = document.getElementById("shopPhone").value.trim();
+      const obs = document.getElementById("shopObs").value.trim();
+
+      const compList = [...shop.selectedComps].map(id => shop.comps.find(x => x.id === id)).filter(Boolean);
+      const freeList = [...shop.selectedFree].map(id => shop.freeAddons.find(x => x.id === id)).filter(Boolean);
+      const lines = [];
+      lines.push("Pedido - Monte seu Açaí");
+      lines.push(`Base: ${shop.base.nome} (${money(shop.base.preco)})`);
+      if (compList.length) lines.push("Complementos:");
+      compList.forEach(c => lines.push(`- ${c.nome} (${money(c.preco)})`));
+      if (freeList.length) lines.push("Adicionais grátis:");
+      freeList.forEach(a => lines.push(`- ${a.nome}`));
+      lines.push(`Total: ${money(shop.total)}`);
+      if (name) lines.push(`Nome: ${name}`);
+      if (phone) lines.push(`Telefone: ${phone}`);
+      if (obs) lines.push(`Obs: ${obs}`);
+
+      const text = lines.join("\n");
+      const url = `https://wa.me/${encodeURIComponent(cfg.whatsapp)}?text=${encodeURIComponent(text)}`;
+      window.open(url, "_blank");
+    }
+
+    async function shopGeneratePix() {
+      // Este arquivo único não hospeda backend. Aqui chamamos um endpoint Pix seu (serverless).
+      // Esperado retorno: { qr_code_base64: "..." } OU { qrCodeBase64: "..." }
+      const cfg = getCfg();
+      if (!cfg.pixApi) {
+        shopStatus.textContent = "Pix API não configurada. Vá em Configurações e informe o endpoint.";
+        return;
+      }
+      if (!shop.base) { shopStatus.textContent = "Selecione uma base para calcular o total."; return; }
+      if (shop.total <= 0) { shopStatus.textContent = "Total inválido."; return; }
+
+      shopStatus.textContent = "Gerando Pix…";
+      try {
+        const res = await fetch(cfg.pixApi, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ amount: Number(shop.total), clienteId: activeClienteId() })
+        });
+        if (!res.ok) throw new Error("Pix API retornou erro: " + res.status);
+        const data = await res.json();
+        const b64 = data.qr_code_base64 || data.qrCodeBase64;
+        if (!b64) throw new Error("Resposta sem QR base64.");
+
+        shopPixQr.src = "data:image/png;base64," + b64;
+        shopPixBox.classList.remove("hidden");
+        shopStatus.textContent = "Pix gerado.";
+      } catch (e) {
+        console.error(e);
+        shopStatus.textContent = "Falha ao gerar Pix. Verifique endpoint Pix.";
+      }
+    }
+
+    /******************************************************************
+     * 11) ADMIN CRUD (produtos, complementos, cupons) + pedidos
+     ******************************************************************/
+    const adminStatus = document.getElementById("adminStatus");
+    document.getElementById("adminReload").addEventListener("click", async () => adminLoadAll());
+
+    // forms
+    document.getElementById("formProduct").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!requireRole("admin")) { alert("Faça login como admin."); return; }
+      const cid = activeClienteId();
+      if (!cid) { alert("Defina clienteId."); return; }
+
+      const nome = document.getElementById("prodName").value.trim();
+      const preco = Number(document.getElementById("prodPrice").value || 0);
+      await addDoc(collection(db, "produtos"), { clienteId: cid, nome, preco, ativo: true, criadoEm: serverTimestamp() });
+      document.getElementById("prodName").value = "";
+      document.getElementById("prodPrice").value = "";
+      await adminLoadProducts();
+    });
+
+    document.getElementById("formComp").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!requireRole("admin")) { alert("Faça login como admin."); return; }
+      const cid = activeClienteId();
+      if (!cid) { alert("Defina clienteId."); return; }
+
+      const nome = document.getElementById("compName").value.trim();
+      const preco = Number(document.getElementById("compPrice").value || 0);
+      await addDoc(collection(db, "complementos"), { clienteId: cid, nome, preco, ativo: true, criadoEm: serverTimestamp() });
+      document.getElementById("compName").value = "";
+      document.getElementById("compPrice").value = "";
+      await adminLoadComps();
+    });
+
+    document.getElementById("formCoupon").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!requireRole("admin")) { alert("Faça login como admin."); return; }
+      const cid = activeClienteId();
+      if (!cid) { alert("Defina clienteId."); return; }
+
+      const codigo = document.getElementById("couponCode").value.trim().toUpperCase();
+      const tipo = document.getElementById("couponType").value;
+      const valor = Number(document.getElementById("couponValue").value || 0);
+      await addDoc(collection(db, "cupons"), { clienteId: cid, codigo, tipo, valor, ativo: true, criadoEm: serverTimestamp() });
+
+      document.getElementById("couponCode").value = "";
+      document.getElementById("couponValue").value = "";
+      await adminLoadCoupons();
+    });
+
+    const adminProducts = document.getElementById("adminProducts");
+    const adminComps = document.getElementById("adminComps");
+    const adminCoupons = document.getElementById("adminCoupons");
+    const adminOrders = document.getElementById("adminOrders");
+
+    async function adminLoadProducts() {
+      adminStatus.textContent = "Carregando produtos…";
+      const rows = await listDocs("produtos", { filterCliente: true, max: 200 });
+      adminProducts.innerHTML = "";
+      rows.forEach(r => {
+        const el = document.createElement("div");
+        el.className = "rounded-2xl border p-3 bg-white";
+        el.innerHTML = `
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <div class="font-extrabold text-purple-800">${escapeHtml(r.nome || "")}</div>
+              <div class="text-xs text-gray-500">Preço: <b>${money(r.preco)}</b> · Ativo: <b>${r.ativo !== false ? "sim" : "não"}</b></div>
+            </div>
+            <div class="flex gap-2">
+              <button class="px-3 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 font-extrabold" data-act="toggle">${r.ativo !== false ? "Desativar" : "Ativar"}</button>
+            </div>
+          </div>
+        `;
+        el.querySelector("[data-act='toggle']").addEventListener("click", async () => {
+          if (!requireRole("admin")) return;
+          await updateDoc(doc(db, "produtos", r.id), { ativo: !(r.ativo !== false) });
+          await adminLoadProducts();
+        });
+        adminProducts.appendChild(el);
+      });
+      adminStatus.textContent = `Produtos: ${rows.length}`;
+    }
+
+    async function adminLoadComps() {
+      adminStatus.textContent = "Carregando complementos…";
+      const rows = await listDocs("complementos", { filterCliente: true, max: 200 });
+      adminComps.innerHTML = "";
+      rows.forEach(r => {
+        const el = document.createElement("div");
+        el.className = "rounded-2xl border p-3 bg-white";
+        el.innerHTML = `
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <div class="font-extrabold text-purple-800">${escapeHtml(r.nome || "")}</div>
+              <div class="text-xs text-gray-500">Preço: <b>${money(r.preco)}</b> · Ativo: <b>${r.ativo !== false ? "sim" : "não"}</b></div>
+            </div>
+            <button class="px-3 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 font-extrabold" data-act="toggle">${r.ativo !== false ? "Desativar" : "Ativar"}</button>
+          </div>
+        `;
+        el.querySelector("[data-act='toggle']").addEventListener("click", async () => {
+          if (!requireRole("admin")) return;
+          await updateDoc(doc(db, "complementos", r.id), { ativo: !(r.ativo !== false) });
+          await adminLoadComps();
+        });
+        adminComps.appendChild(el);
+      });
+      adminStatus.textContent = `Complementos: ${rows.length}`;
+    }
+
+    async function adminLoadCoupons() {
+      adminStatus.textContent = "Carregando cupons…";
+      const rows = await listDocs("cupons", { filterCliente: true, max: 200 });
+      adminCoupons.innerHTML = "";
+      rows.forEach(r => {
+        const el = document.createElement("div");
+        el.className = "rounded-2xl border p-3 bg-white";
+        el.innerHTML = `
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <div class="font-extrabold text-purple-800">${escapeHtml(r.codigo || "")}</div>
+              <div class="text-xs text-gray-500">
+                Tipo: <b>${escapeHtml(r.tipo || "")}</b> · Valor: <b>${r.tipo === "percentual" ? `${Number(r.valor||0)}%` : money(r.valor)}</b> ·
+                Ativo: <b>${r.ativo !== false ? "sim" : "não"}</b>
+              </div>
+            </div>
+            <button class="px-3 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 font-extrabold" data-act="toggle">${r.ativo !== false ? "Desativar" : "Ativar"}</button>
+          </div>
+        `;
+        el.querySelector("[data-act='toggle']").addEventListener("click", async () => {
+          if (!requireRole("admin")) return;
+          await updateDoc(doc(db, "cupons", r.id), { ativo: !(r.ativo !== false) });
+          await adminLoadCoupons();
+        });
+        adminCoupons.appendChild(el);
+      });
+      adminStatus.textContent = `Cupons: ${rows.length}`;
+    }
+
+    let unsubOrders = null;
+    function adminWatchOrders() {
+      if (unsubOrders) { unsubOrders(); unsubOrders = null; }
+      const cid = activeClienteId();
+      if (!cid) return;
+
+      const colRef = collection(db, "pedidos");
+      const q = query(colRef, where("clienteId", "==", cid), orderBy("criadoEm", "desc"), limit(25));
+
+      unsubOrders = onSnapshot(q, (snap) => {
+        adminOrders.innerHTML = "";
+        if (snap.empty) {
+          adminOrders.innerHTML = `<div class="text-sm text-gray-500">Sem pedidos.</div>`;
+          return;
+        }
+
+        snap.forEach(d => {
+          const p = d.data();
+          const el = document.createElement("div");
+          el.className = "rounded-2xl border bg-white p-3";
+          el.innerHTML = `
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <div class="text-sm font-extrabold text-purple-800">${money(p.total || 0)} <span class="text-xs text-gray-500">(${escapeHtml(p.canal || "delivery")})</span></div>
+                <div class="text-xs text-gray-500">Pagamento: <b>${escapeHtml(p.pagamento || "")}</b> · Status: <b>${escapeHtml(p.status || "")}</b></div>
+                <div class="text-xs text-gray-600 mt-2">${(p.itens||[]).slice(0,3).map(i => `• ${escapeHtml(i.qtd)}x ${escapeHtml(i.nome)}`).join("<br>")}</div>
+              </div>
+              <div class="text-xs text-gray-500 mono">${escapeHtml(d.id)}</div>
+            </div>
+          `;
+          adminOrders.appendChild(el);
+        });
+      });
+    }
+
+    async function adminLoadAll() {
+      if (!requireRole("admin")) { adminStatus.textContent = "Faça login como admin para gerenciar a loja."; return; }
+      if (!activeClienteId()) { adminStatus.textContent = "Defina clienteId (Configurações) ou no perfil do usuário."; return; }
+      await adminLoadProducts();
+      await adminLoadComps();
+      await adminLoadCoupons();
+      adminWatchOrders();
+    }
+
+    /******************************************************************
+     * 13) BOOT: carregar tudo conforme permissões
+     ******************************************************************/
+    async function bootAll() {
+      syncCfgUI();
+      syncStatusUI();
+      applyBranding();
+
+      // PDV e Delivery podem funcionar sem login, desde que existam dados e/ou clienteId
+      await pdvLoadProducts();
+      pdvRenderCart();
+      pdvTotals();
+      pdvReceiptRefresh();
+
+      await shopLoad();
+
+      // Admin (somente se permitido)
+      if (requireRole("admin")) await adminLoadAll();
+    }
+
+    /******************************************************************
+     * 14) INIT
+     ******************************************************************/
+    setActiveTab("tabPDV");
+    syncCfgUI();
+    syncStatusUI();
+    applyBranding();
+    applyDeliveryOnlyMode();
+    await bootAll();
   </script>
 </body>
 </html>
