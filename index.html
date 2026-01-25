@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Plataforma Delivery White-Label | Console Único + PDV 76mm</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
 
   <style>
     :root {
@@ -14,6 +17,7 @@
       --acai-accent: #f97316;
     }
     html { scroll-behavior: smooth; }
+    body { font-family: "Poppins", system-ui, -apple-system, sans-serif; }
     .card { transition: transform .15s ease, box-shadow .15s ease; }
     .card:hover { transform: translateY(-2px); box-shadow: 0 18px 40px rgba(0,0,0,.10); }
     .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
@@ -39,10 +43,25 @@
     .acai-card { border: 1px solid rgba(124,58,237,.12); box-shadow: 0 12px 30px rgba(124,58,237,.08); }
     .acai-pill { background: rgba(249,115,22,.15); color: #c2410c; }
     .pdv-cta { font-size: 15px; }
+    .acai-unique {
+      background-image:
+        radial-gradient(circle at 20% 20%, rgba(249,115,22,.08), transparent 45%),
+        radial-gradient(circle at 80% 10%, rgba(124,58,237,.12), transparent 40%),
+        linear-gradient(180deg, #fff, var(--acai-bg));
+    }
+    .acai-unique button {
+      letter-spacing: .02em;
+      box-shadow: 0 6px 14px rgba(124,58,237,.12);
+    }
+    .acai-unique input,
+    .acai-unique select,
+    .acai-unique textarea {
+      border-color: rgba(124,58,237,.2);
+    }
   </style>
 </head>
 
-<body class="min-h-screen bg-acai text-gray-900">
+<body class="min-h-screen bg-acai text-gray-900 acai-unique">
   <!-- TOPBAR -->
   <header class="sticky top-0 z-50 border-b bg-white/90 backdrop-blur no-print">
     <div class="mx-auto max-w-7xl px-4 py-4 flex items-center justify-between gap-3">
