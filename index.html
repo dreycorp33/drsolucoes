@@ -3,10 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Plataforma Delivery White-Label | Console Único + PDV 80mm</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <style>
+    .public-only .no-public { display: none !important; }
+  <header class="sticky top-0 z-50 border-b bg-white/85 backdrop-blur no-print no-public">
+        <div class="h-10 w-10 rounded-xl bg-purple-700 text-white grid place-items-center font-bold" id="brandIcon">🍇</div>
+          <div class="text-base font-extrabold" id="brandTitle">Console Único | Delivery + Admin + PDV (Cupom 76mm)</div>
+      <aside class="lg:col-span-3 no-public">
     html { scroll-behavior: smooth; }
     .card { transition: transform .15s ease, box-shadow .15s ease; }
     .card:hover { transform: translateY(-2px); box-shadow: 0 18px 40px rgba(0,0,0,.10); }
@@ -274,6 +275,10 @@
                 <div class="mt-5 text-sm font-semibold text-gray-500">Adicionais grátis (até 4)</div>
                 <div class="text-xs text-gray-500 mt-1">Escolha até 4 adicionais gratuitos por pedido.</div>
                 <div id="shopFreeAddons" class="mt-3 grid sm:grid-cols-2 gap-3"></div>
+
+                <div class="mt-5 text-sm font-semibold text-gray-500">Sabor do sorvete</div>
+                <div class="text-xs text-gray-500 mt-1">Selecione o sabor do sorvete gratuito.</div>
+                <div class="mt-3 grid sm:grid-cols-2 gap-3" id="shopIceCreamFlavors"></div>
               </div>
 
               <div class="lg:col-span-5 rounded-2xl border p-4 bg-gray-50">
@@ -286,6 +291,8 @@
                   <div class="text-sm text-gray-700" id="shopCompList">—</div>
                   <div class="text-xs text-gray-500 mt-3">Adicionais grátis</div>
                   <div class="text-sm text-gray-700" id="shopFreeList">—</div>
+                  <div class="text-xs text-gray-500 mt-3">Sabor do sorvete</div>
+                  <div class="text-sm text-gray-700" id="shopIceCreamFlavorLabel">—</div>
                   <div class="mt-3 flex items-center justify-between">
                     <div class="text-sm font-extrabold text-gray-800">Total</div>
                     <div class="text-lg font-extrabold text-purple-800" id="shopTotal">R$ 0,00</div>
@@ -450,6 +457,21 @@
                   <input id="cfgPixApi" class="border rounded-xl px-3 py-2" placeholder="Pix API (ex: https://seu-backend/pix)">
                 </div>
 
+                <div class="mt-5 text-sm font-semibold text-gray-500">Identidade da loja</div>
+                <div class="text-xs text-gray-600 mt-1">Personalize o nome e cor principal exibidos no console.</div>
+                <div class="mt-3 grid md:grid-cols-3 gap-2">
+                  <input id="cfgStoreName" class="border rounded-xl px-3 py-2" placeholder="Nome da loja">
+                  <input id="cfgStoreSubtitle" class="border rounded-xl px-3 py-2" placeholder="Subtítulo/Slogan">
+                  <input id="cfgPrimaryColor" class="border rounded-xl px-3 py-2" placeholder="Cor principal (#6D28D9)">
+                </div>
+
+                <div class="mt-5 text-sm font-semibold text-gray-500">Link de compartilhamento</div>
+                <div class="text-xs text-gray-600 mt-1">Compartilhe este link apenas para pedidos (Delivery).</div>
+                <div class="mt-2 flex flex-col sm:flex-row gap-2">
+                  <input id="cfgShareLink" readonly class="w-full border rounded-xl px-3 py-2 bg-gray-100 text-gray-700">
+                  <button id="cfgCopyLink" class="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 font-extrabold">Copiar link</button>
+                </div>
+
                 <div class="mt-3 flex gap-2">
                   <button id="cfgSave" class="px-4 py-2 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-extrabold">Salvar</button>
                   <button id="cfgReset" class="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 font-extrabold">Reset</button>
@@ -470,7 +492,18 @@
                 <div class="mt-3 rounded-xl bg-gray-50 border p-3 text-xs text-gray-700 space-y-2">
                   <div><b>Coleções usadas:</b> clientes, usuarios, produtos, complementos, cupons, pedidos</div>
                   <div><b>Multi-loja:</b> usar <span class="mono">clienteId</span> nos docs e queries filtradas</div>
-                  <div><b>Impressão:</b> cupom 80mm via <span class="mono">window.print()</span></div>
+      storeName: "WL_storeName",
+      storeSubtitle: "WL_storeSubtitle",
+      primaryColor: "WL_primaryColor"
+        pixApi:    localStorage.getItem(LS.pixApi)    || "", // ex: https://seu-backend/pix
+        storeName: localStorage.getItem(LS.storeName) || "",
+        storeSubtitle: localStorage.getItem(LS.storeSubtitle) || "",
+        primaryColor: localStorage.getItem(LS.primaryColor) || ""
+      localStorage.setItem(LS.storeName, next.storeName || "");
+      localStorage.setItem(LS.storeSubtitle, next.storeSubtitle || "");
+      localStorage.setItem(LS.primaryColor, next.primaryColor || "");
+      cfgShareLink.value = shareLink();
+      applyBranding();
                 </div>
               </div>
             </div>
@@ -567,6 +600,9 @@
     const lblRole      = document.getElementById("lblRole");
     const lblWhatsApp  = document.getElementById("lblWhatsApp");
     const lblPixApi    = document.getElementById("lblPixApi");
+    const brandTitle   = document.getElementById("brandTitle");
+    const brandIcon    = document.getElementById("brandIcon");
+    const cfgShareLink = document.getElementById("cfgShareLink");
 
     let session = {
       user: null,
@@ -590,6 +626,29 @@
       document.getElementById("cfgClienteId").value = cfg.clienteId;
       document.getElementById("cfgWhats").value     = cfg.whatsapp;
       document.getElementById("cfgPixApi").value    = cfg.pixApi;
+      document.getElementById("cfgStoreName").value = cfg.storeName;
+      document.getElementById("cfgStoreSubtitle").value = cfg.storeSubtitle;
+      document.getElementById("cfgPrimaryColor").value = cfg.primaryColor;
+      cfgShareLink.value = shareLink();
+    }
+
+    function applyBranding() {
+      const cfg = getCfg();
+      const baseTitle = "Console Único | Delivery + Admin + PDV (Cupom 76mm)";
+      brandTitle.textContent = cfg.storeName ? `${cfg.storeName} | Delivery + Admin + PDV (Cupom 76mm)` : baseTitle;
+      appSubtitle.textContent = cfg.storeSubtitle || appSubtitle.textContent;
+      if (cfg.primaryColor) {
+        brandIcon.style.backgroundColor = cfg.primaryColor;
+      } else {
+        brandIcon.style.backgroundColor = "";
+      }
+    }
+
+    function shareLink() {
+      const url = new URL(window.location.href);
+      url.searchParams.set("public", "1");
+      url.hash = "delivery";
+      return url.toString();
     }
 
     btnSignOut.addEventListener("click", async () => {
@@ -688,7 +747,10 @@
       setCfg({
         clienteId: document.getElementById("cfgClienteId").value.trim(),
         whatsapp:  document.getElementById("cfgWhats").value.trim(),
-        pixApi:    document.getElementById("cfgPixApi").value.trim()
+        pixApi:    document.getElementById("cfgPixApi").value.trim(),
+        storeName: document.getElementById("cfgStoreName").value.trim(),
+        storeSubtitle: document.getElementById("cfgStoreSubtitle").value.trim(),
+        primaryColor: document.getElementById("cfgPrimaryColor").value.trim()
       });
       alert("Configurações salvas.");
       bootAll();
@@ -698,9 +760,25 @@
       localStorage.removeItem(LS.clienteId);
       localStorage.removeItem(LS.whatsapp);
       localStorage.removeItem(LS.pixApi);
+      localStorage.removeItem(LS.storeName);
+      localStorage.removeItem(LS.storeSubtitle);
+      localStorage.removeItem(LS.primaryColor);
       syncCfgUI();
       syncStatusUI();
+      applyBranding();
       bootAll();
+    });
+
+    document.getElementById("cfgCopyLink").addEventListener("click", async () => {
+      const link = shareLink();
+      cfgShareLink.value = link;
+      try {
+        await navigator.clipboard.writeText(link);
+        alert("Link copiado!");
+      } catch (err) {
+        console.error(err);
+        alert("Não foi possível copiar. Copie manualmente.");
+      }
     });
 
     /******************************************************************
@@ -947,7 +1025,8 @@
       const received = Math.max(0, Number(pdvReceived.value || 0));
       const change = (pay === "dinheiro") ? Math.max(0, received - total) : 0;
 
-      const lojaNome = (session.loja && session.loja.nome) ? session.loja.nome : "Açaí Premium";
+      const cfg = getCfg();
+      const lojaNome = (session.loja && session.loja.nome) ? session.loja.nome : (cfg.storeName || "Açaí Premium");
       const lojaTel  = (session.loja && session.loja.whatsapp) ? session.loja.whatsapp : getCfg().whatsapp;
 
       return {
@@ -1082,6 +1161,14 @@
         { id: "mel", nome: "Mel", preco: 2.5 }
       ],
       base: null,
+      iceCreamFlavors: [
+        { id: "baunilha", nome: "Baunilha" },
+        { id: "chocolate", nome: "Chocolate" },
+        { id: "morango", nome: "Morango" },
+        { id: "flocos", nome: "Flocos" },
+        { id: "napolitano", nome: "Napolitano" }
+      ],
+      selectedIceCream: "",
       selectedComps: new Set(),
       freeAddons: [
         { id: "sorvete", nome: "Sorvete (gratuito)" },
@@ -1100,6 +1187,8 @@
     const shopCompList  = document.getElementById("shopCompList");
     const shopFreeAddons = document.getElementById("shopFreeAddons");
     const shopFreeList  = document.getElementById("shopFreeList");
+    const shopIceCreamFlavors = document.getElementById("shopIceCreamFlavors");
+    const shopIceCreamFlavorLabel = document.getElementById("shopIceCreamFlavorLabel");
     const shopTotal     = document.getElementById("shopTotal");
     const shopStatus    = document.getElementById("shopStatus");
     const shopPixBox    = document.getElementById("shopPixBox");
@@ -1112,6 +1201,7 @@
 
     function shopReset() {
       shop.base = null;
+      shop.selectedIceCream = "";
       shop.selectedComps = new Set();
       shop.selectedFree = new Set();
       shop.total = 0;
@@ -1258,12 +1348,36 @@
         shopFreeAddons.appendChild(el);
       });
 
+      // sabores do sorvete
+      shopIceCreamFlavors.innerHTML = "";
+      shop.iceCreamFlavors.forEach(flavor => {
+        const active = shop.selectedIceCream === flavor.id;
+        const el = document.createElement("button");
+        el.className = `card text-left rounded-2xl border p-4 ${active ? "bg-purple-50 border-purple-200" : "bg-white hover:bg-purple-50"}`;
+        el.innerHTML = `
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <div class="font-extrabold text-purple-800">${escapeHtml(flavor.nome)}</div>
+              <div class="text-xs text-gray-600">Sabor do sorvete</div>
+            </div>
+            <div class="text-xs font-semibold ${active ? "text-purple-700" : "text-gray-500"}">${active ? "Selecionado" : "Selecionar"}</div>
+          </div>
+        `;
+        el.addEventListener("click", () => {
+          shop.selectedIceCream = flavor.id;
+          shopRender();
+        });
+        shopIceCreamFlavors.appendChild(el);
+      });
+
       // resumo
       shopBaseLabel.textContent = shop.base ? `${shop.base.nome} (${money(shop.base.preco)})` : "—";
       const compList = [...shop.selectedComps].map(id => shop.comps.find(x => x.id === id)).filter(Boolean);
       shopCompList.textContent = compList.length ? compList.map(x => `${x.nome} (${money(x.preco)})`).join(", ") : "—";
       const freeList = [...shop.selectedFree].map(id => shop.freeAddons.find(x => x.id === id)).filter(Boolean);
       shopFreeList.textContent = freeList.length ? freeList.map(x => x.nome).join(", ") : "—";
+      const flavor = shop.iceCreamFlavors.find(f => f.id === shop.selectedIceCream);
+      shopIceCreamFlavorLabel.textContent = flavor ? flavor.nome : "—";
       shopTotal.textContent = money(shop.total);
     }
 
@@ -1276,6 +1390,7 @@
 
       const compList = [...shop.selectedComps].map(id => shop.comps.find(x => x.id === id)).filter(Boolean);
       const freeList = [...shop.selectedFree].map(id => shop.freeAddons.find(x => x.id === id)).filter(Boolean);
+      const flavor = shop.iceCreamFlavors.find(f => f.id === shop.selectedIceCream);
       const lines = [];
       lines.push("Pedido - Monte seu Açaí");
       lines.push(`Base: ${shop.base.nome} (${money(shop.base.preco)})`);
@@ -1283,6 +1398,7 @@
       compList.forEach(c => lines.push(`- ${c.nome} (${money(c.preco)})`));
       if (freeList.length) lines.push("Adicionais grátis:");
       freeList.forEach(a => lines.push(`- ${a.nome}`));
+      if (flavor) lines.push(`Sorvete: ${flavor.nome}`);
       lines.push(`Total: ${money(shop.total)}`);
       if (name) lines.push(`Nome: ${name}`);
       if (phone) lines.push(`Telefone: ${phone}`);
@@ -1514,6 +1630,7 @@
     async function bootAll() {
       syncCfgUI();
       syncStatusUI();
+      applyBranding();
 
       // PDV e Delivery podem funcionar sem login, desde que existam dados e/ou clienteId
       await pdvLoadProducts();
@@ -1533,7 +1650,16 @@
     setActiveTab("tabPDV");
     syncCfgUI();
     syncStatusUI();
+    applyBranding();
     await bootAll();
+
+    const publicMode = new URLSearchParams(window.location.search).get("public") === "1";
+    if (publicMode) {
+      document.body.classList.add("public-only");
+      setActiveTab("tabDelivery");
+    } else if (window.location.hash === "#delivery") {
+      setActiveTab("tabDelivery");
+    }
   </script>
 </body>
 </html>
