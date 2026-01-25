@@ -36,7 +36,7 @@
       <div class="flex items-center gap-3">
         <div class="h-10 w-10 rounded-xl bg-purple-700 text-white grid place-items-center font-bold">🍇</div>
         <div class="leading-tight">
-          <div class="text-base font-extrabold">Console Único | Delivery + Admin + Master + PDV (Cupom 80mm)</div>
+          <div class="text-base font-extrabold">Console Único | Delivery + Admin + PDV (Cupom 80mm)</div>
           <div class="text-xs text-gray-600" id="appSubtitle">Aguardando configuração…</div>
         </div>
       </div>
@@ -78,14 +78,9 @@
               <div class="text-xs text-gray-600 font-semibold">CRUD + pedidos</div>
             </button>
 
-            <button data-tab="tabMaster" class="tabBtn px-4 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 font-extrabold text-left">
-              Master (Plataforma)
-              <div class="text-xs text-gray-600 font-semibold">Clientes + planos</div>
-            </button>
-
             <button data-tab="tabLogin" class="tabBtn px-4 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 font-extrabold text-left">
               Login / Acesso
-              <div class="text-xs text-gray-600 font-semibold">Admin/Master</div>
+              <div class="text-xs text-gray-600 font-semibold">Admin</div>
             </button>
 
             <button data-tab="tabConfig" class="tabBtn px-4 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 font-extrabold text-left">
@@ -395,66 +390,11 @@
           </div>
         </div>
 
-        <!-- TAB: MASTER (PLATAFORMA) -->
-        <div id="tabMaster" class="tabPanel hidden">
-          <div class="rounded-2xl border bg-white p-5">
-            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-              <div>
-                <h2 class="text-2xl font-extrabold text-purple-800">Master (Plataforma)</h2>
-                <p class="text-sm text-gray-600 mt-1">Gestão de clientes (lojas) e planos. (Requer role master.)</p>
-              </div>
-              <div class="flex gap-2">
-                <button id="masterReload" class="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 font-extrabold">Recarregar</button>
-              </div>
-            </div>
-
-            <div class="mt-5 grid lg:grid-cols-12 gap-4">
-              <div class="lg:col-span-7 rounded-2xl border p-4">
-                <div class="text-sm font-semibold text-gray-500">Clientes (clientes)</div>
-                <div class="text-xs text-gray-500 mt-1">Cada cliente = uma loja/tenant (clienteId = slug).</div>
-
-                <form id="formClient" class="mt-3 grid md:grid-cols-5 gap-2">
-                  <input id="clientName" class="border rounded-xl px-3 py-2" placeholder="Nome da loja" required>
-                  <input id="clientSlug" class="border rounded-xl px-3 py-2" placeholder="slug (acai-do-joao)" required>
-                  <input id="clientWhats" class="border rounded-xl px-3 py-2" placeholder="WhatsApp (551199…)" required>
-                  <select id="clientPlan" class="border rounded-xl px-3 py-2">
-                    <option value="basico">Básico</option>
-                    <option value="pro">Pro</option>
-                    <option value="premium">Premium</option>
-                  </select>
-                  <button class="rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-extrabold px-4 py-2">Criar</button>
-                </form>
-
-                <div id="masterClients" class="mt-3 grid sm:grid-cols-2 gap-3"></div>
-              </div>
-
-              <div class="lg:col-span-5 rounded-2xl border p-4 bg-gray-50">
-                <div class="text-sm font-semibold text-gray-500">Faturamento (simplificado)</div>
-                <div class="text-xs text-gray-500 mt-1">Resumo de clientes ativos por plano (MRR estimado).</div>
-
-                <div class="mt-3 rounded-xl border bg-white p-3 space-y-2 text-sm">
-                  <div class="flex justify-between"><span>Ativos (Básico)</span><b id="mrrBasic">0</b></div>
-                  <div class="flex justify-between"><span>Ativos (Pro)</span><b id="mrrPro">0</b></div>
-                  <div class="flex justify-between"><span>Ativos (Premium)</span><b id="mrrPremium">0</b></div>
-                  <div class="receipt-hr"></div>
-                  <div class="flex justify-between text-base"><span class="font-extrabold">MRR Estimado</span><b id="mrrTotal">R$ 0,00</b></div>
-                </div>
-
-                <div class="text-xs text-gray-500 mt-3">
-                  Valores padrão: Básico R$49, Pro R$79, Premium R$129 (ajuste no código).
-                </div>
-              </div>
-            </div>
-
-            <div class="text-xs text-gray-500 mt-3" id="masterStatus"></div>
-          </div>
-        </div>
-
         <!-- TAB: LOGIN -->
         <div id="tabLogin" class="tabPanel hidden">
           <div class="rounded-2xl border bg-white p-5">
             <h2 class="text-2xl font-extrabold text-purple-800">Login / Acesso</h2>
-            <p class="text-sm text-gray-600 mt-1">Login único (Firebase Auth). Roles via Firestore (usuarios).</p>
+            <p class="text-sm text-gray-600 mt-1">Login único (Firebase Auth). Permissões via Firestore (usuarios).</p>
 
             <div class="mt-5 grid md:grid-cols-12 gap-4">
               <div class="md:col-span-7 rounded-2xl border p-4">
@@ -473,8 +413,8 @@
                   <div><b>usuarios</b> (coleção) define:</div>
                   <ul class="list-disc pl-5">
                     <li><span class="mono">uid</span> (do Auth)</li>
-                    <li><span class="mono">role</span>: <b>admin</b> ou <b>master</b></li>
-                    <li><span class="mono">clienteId</span> (para admin)</li>
+                    <li><span class="mono">role</span>: <b>admin</b></li>
+                    <li><span class="mono">clienteId</span> (obrigatório)</li>
                   </ul>
                   <div class="mt-2">Exemplo doc (usuarios/{uid}):</div>
                   <pre class="mono text-[11px] bg-white border rounded-xl p-2 overflow-auto">{
@@ -496,7 +436,7 @@
             <div class="mt-5 grid lg:grid-cols-12 gap-4">
               <div class="lg:col-span-7 rounded-2xl border p-4 bg-gray-50">
                 <div class="text-sm font-semibold text-gray-500">Tenant / Loja ativa</div>
-                <div class="text-xs text-gray-600 mt-1">Se você for Admin, isso vem do seu usuário. Se for Master, pode alternar manualmente para testar.</div>
+                <div class="text-xs text-gray-600 mt-1">Se você for Admin, isso vem do seu usuário. Você também pode ajustar manualmente para testes locais.</div>
 
                 <div class="mt-3 grid md:grid-cols-3 gap-2">
                   <input id="cfgClienteId" class="border rounded-xl px-3 py-2" placeholder="clienteId (slug)">
@@ -625,7 +565,7 @@
     let session = {
       user: null,
       profile: null,   // usuarios/{uid} => { role, clienteId }
-      role: "guest",   // guest|admin|master
+      role: "guest",   // guest|admin
       clienteId: "",   // ativo para queries
       loja: null       // clientes/{clienteId}
     };
@@ -668,8 +608,7 @@
     }
 
     function requireRole(minRole) {
-      // master > admin > guest
-      const rank = { guest: 0, admin: 1, master: 2 };
+      const rank = { guest: 0, admin: 1 };
       return (rank[session.role] || 0) >= (rank[minRole] || 0);
     }
 
@@ -1488,100 +1427,6 @@
     }
 
     /******************************************************************
-     * 12) MASTER (clientes + MRR)
-     ******************************************************************/
-    const masterStatus = document.getElementById("masterStatus");
-    const masterClients = document.getElementById("masterClients");
-    const mrrBasic = document.getElementById("mrrBasic");
-    const mrrPro = document.getElementById("mrrPro");
-    const mrrPremium = document.getElementById("mrrPremium");
-    const mrrTotal = document.getElementById("mrrTotal");
-
-    const PRICES = { basico: 49, pro: 79, premium: 129 };
-
-    document.getElementById("masterReload").addEventListener("click", async () => masterLoad());
-
-    document.getElementById("formClient").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      if (!requireRole("master")) { alert("Acesso restrito ao Master."); return; }
-
-      const nome = document.getElementById("clientName").value.trim();
-      const slug = document.getElementById("clientSlug").value.trim();
-      const whatsapp = document.getElementById("clientWhats").value.trim();
-      const plano = document.getElementById("clientPlan").value;
-
-      // clientes/{slug}
-      await setDoc(doc(db, "clientes", slug), {
-        nome, whatsapp, plano, ativo: true, criadoEm: serverTimestamp()
-      }, { merge: true });
-
-      document.getElementById("clientName").value = "";
-      document.getElementById("clientSlug").value = "";
-      document.getElementById("clientWhats").value = "";
-      document.getElementById("clientPlan").value = "basico";
-
-      await masterLoad();
-    });
-
-    async function masterLoad() {
-      if (!requireRole("master")) { masterStatus.textContent = "Acesso restrito ao Master."; return; }
-
-      masterStatus.textContent = "Carregando clientes…";
-      const rows = await listDocs("clientes", { filterCliente: false, max: 300 });
-
-      masterClients.innerHTML = "";
-      let count = { basico: 0, pro: 0, premium: 0 };
-      rows.forEach(r => {
-        const plan = r.plano || "basico";
-        if (r.ativo !== false) count[plan] = (count[plan] || 0) + 1;
-
-        const el = document.createElement("div");
-        el.className = "rounded-2xl border p-3 bg-white";
-        el.innerHTML = `
-          <div class="flex items-start justify-between gap-3">
-            <div>
-              <div class="font-extrabold text-purple-800">${escapeHtml(r.nome || r.id)}</div>
-              <div class="text-xs text-gray-500">
-                slug: <b class="mono">${escapeHtml(r.id)}</b> · plano: <b>${escapeHtml(plan)}</b> · ativo: <b>${r.ativo !== false ? "sim" : "não"}</b>
-              </div>
-              <div class="text-xs text-gray-500">WhatsApp: <b class="mono">${escapeHtml(r.whatsapp || "")}</b></div>
-            </div>
-            <div class="grid gap-2">
-              <button class="px-3 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 font-extrabold" data-act="toggle">${r.ativo !== false ? "Suspender" : "Ativar"}</button>
-              <button class="px-3 py-2 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-extrabold" data-act="use">Usar</button>
-            </div>
-          </div>
-        `;
-
-        el.querySelector("[data-act='toggle']").addEventListener("click", async () => {
-          await updateDoc(doc(db, "clientes", r.id), { ativo: !(r.ativo !== false) });
-          await masterLoad();
-        });
-
-        el.querySelector("[data-act='use']").addEventListener("click", async () => {
-          // alterna tenant no console para testar (não altera perfil)
-          setCfg({ clienteId: r.id, whatsapp: r.whatsapp || getCfg().whatsapp });
-          session.clienteId = r.id;
-          session.loja = await loadLoja(r.id);
-          syncStatusUI();
-          await bootAll();
-          alert("Tenant alterado para: " + r.id);
-        });
-
-        masterClients.appendChild(el);
-      });
-
-      // MRR estimado
-      mrrBasic.textContent = count.basico || 0;
-      mrrPro.textContent = count.pro || 0;
-      mrrPremium.textContent = count.premium || 0;
-      const totalMRR = (count.basico * PRICES.basico) + (count.pro * PRICES.pro) + (count.premium * PRICES.premium);
-      mrrTotal.textContent = money(totalMRR);
-
-      masterStatus.textContent = `Clientes: ${rows.length}`;
-    }
-
-    /******************************************************************
      * 13) BOOT: carregar tudo conforme permissões
      ******************************************************************/
     async function bootAll() {
@@ -1596,9 +1441,8 @@
 
       await shopLoad();
 
-      // Admin e Master (somente se permitido)
+      // Admin (somente se permitido)
       if (requireRole("admin")) await adminLoadAll();
-      if (requireRole("master")) await masterLoad();
     }
 
     /******************************************************************
