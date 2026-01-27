@@ -6,6 +6,12 @@ O repositório contém:
 - `index.html` — aplicação completa (HTML/CSS/JS).
 - `.nojekyll` — evita que o GitHub Pages processe com Jekyll (útil para arquivos que começam com `_`).
 - `README.md` — instruções.
+- `site-vendas/` — front-end do site de vendas.
+- `demo/` — ambiente de demonstrações e protótipos.
+- `sistema/` — aplicação principal (backoffice/operacional).
+- `api/` — serviços de backend e integrações.
+- `docs/` — documentação técnica e guias.
+- `docker-compose.yml` — orquestração local dos serviços.
 
 Como publicar (opções):
 

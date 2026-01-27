@@ -1,0 +1,30 @@
+version: "3.9"
+
+services:
+  site-vendas:
+    build: ./site-vendas
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+
+  demo:
+    build: ./demo
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=development
+
+  sistema:
+    build: ./sistema
+    ports:
+      - "3002:3000"
+    environment:
+      - NODE_ENV=development
+
+  api:
+    build: ./api
+    ports:
+      - "4000:4000"
+    environment:
+      - NODE_ENV=development
