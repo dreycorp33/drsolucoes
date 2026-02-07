@@ -1,329 +1,1565 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Império Morangos - Gestão Profissional</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Simulador (Sandbox) • Drones + Waypoints + Voz + Satélite + Street View</title>
 
-  <!-- jsPDF e AutoTable (CDN) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Leaflet.draw -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css">
+  <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
 
   <style>
-    :root { --primary: #d32f2f; --secondary: #2980b9; --success: #27ae60; --warning: #f39c12; --danger: #eb4d4b; --bg: #fff5f5; }
-    body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 20px; font-size: 13px; }
-    .container { max-width: 1350px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); border-top: 5px solid var(--primary); display: grid; grid-template-columns: 350px 1fr; gap: 20px; }
-    .top-bar { grid-column: span 2; background: #2d3436; color: white; padding: 12px 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-    .dash { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; grid-column: span 2; }
-    .card { padding: 15px; border-radius: 8px; color: white; }
-    .card-vendas { background: var(--success); }
-    .card-recebido { background: var(--secondary); }
-    .card-pendente { background: var(--warning); }
-    .card-val { font-size: 24px; font-weight: bold; display: block; margin-top: 5px; }
-    .list-box { background: #f9f9f9; border: 1px solid #eee; border-radius: 8px; max-height: 180px; overflow-y: auto; margin: 10px 0; }
-    .item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee; align-items: center; }
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; }
-    th { background: #f1f2f6; padding: 12px; text-align: left; }
-    td { padding: 10px; border-bottom: 1px solid #eee; }
-    .status-pago { color: var(--success); font-weight: bold; }
-    .status-aberto { color: var(--danger); font-weight: bold; }
-    button { border: none; border-radius: 6px; cursor: pointer; font-weight: bold; padding: 10px; }
-    .btn-del { background: var(--danger); color: white; padding: 5px 8px; font-size: 11px; margin-left: 5px; }
-    .btn-quitar { background: var(--success); color: white; padding: 5px 8px; font-size: 11px; }
-    input, select { padding: 8px; border: 1px solid #ddd; border-radius: 6px; width: 100%; box-sizing: border-box; margin-bottom: 5px; }
-    #cupom { display: none; width: 72mm; padding: 10px; font-family: 'Courier New', monospace; }
-    @media print { body * { visibility: hidden; } #cupom, #cupom * { visibility: visible; } #cupom { display: block; position: absolute; left: 0; top: 0; } }
+    :root{
+      color-scheme: dark;
+      --bg:#071024;
+      --panel: rgba(14, 26, 51, .65);
+      --card: rgba(18, 34, 68, .70);
+      --stroke: rgba(255,255,255,.10);
+      --stroke2: rgba(110,168,255,.30);
+      --text:#e9f0ff;
+      --muted:#a9b7d9;
+      --accent:#6ea8ff;
+      --good:#49d38a;
+      --warn:#ffc857;
+      --bad:#ff5c7a;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      --shadow: 0 14px 40px rgba(0,0,0,.35);
+      --r: 16px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background: radial-gradient(1200px 700px at 25% 0%, #152b5a 0%, var(--bg) 55%);
+      color:var(--text);
+      font-family:var(--sans);
+      height:100vh;
+      overflow:hidden;
+    }
+    header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      padding:12px 14px;
+      border-bottom:1px solid var(--stroke);
+      background: rgba(8, 16, 34, .72);
+      backdrop-filter: blur(10px);
+    }
+    .brand{display:flex; flex-direction:column; line-height:1.1;}
+    .brand strong{font-size:14px; letter-spacing:.2px}
+    .brand span{font-size:12px; color:var(--muted)}
+    .top-right{display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end;}
+    .pill{
+      font-size:12px; color:var(--muted);
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.06);
+      padding:7px 10px; border-radius:999px;
+      display:flex; gap:8px; align-items:center; white-space:nowrap;
+    }
+    .dot{width:8px;height:8px;border-radius:99px;background:var(--warn)}
+    .dot.on{background:var(--good)}
+    .kbd{
+      font-family:var(--mono); font-size:11px;
+      padding:2px 6px; border-radius:8px;
+      border:1px solid var(--stroke);
+      background: rgba(0,0,0,.25); color: var(--text);
+    }
+
+    .layout{display:grid; grid-template-columns: 520px 1fr; height: calc(100vh - 56px);}
+    aside{
+      border-right:1px solid var(--stroke);
+      background: var(--panel);
+      backdrop-filter: blur(10px);
+      padding:12px;
+      overflow:auto;
+    }
+    main{position:relative}
+    #map{width:100%; height:100%; background:#061022; position:relative;}
+
+    /* Airspace overlay */
+    .airspace{position:absolute; inset:0; pointer-events:none; z-index:9999; overflow:hidden;}
+    .uav{
+      position:absolute; width:28px;height:28px;
+      transform: translate(-50%,-50%);
+      filter: drop-shadow(0 12px 18px rgba(0,0,0,.60));
+      opacity:.95;
+      transition: opacity .2s ease;
+    }
+    .uav .body{
+      width:100%;height:100%;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.10);
+      backdrop-filter: blur(2px);
+      display:grid; place-items:center;
+      position:relative;
+    }
+    .uav .core{
+      width:10px;height:10px;border-radius:99px;
+      background: rgba(110,168,255,.95);
+      box-shadow: 0 0 18px rgba(110,168,255,.65);
+    }
+    .uav.recall .core{ background: rgba(255,200,87,.95); box-shadow: 0 0 18px rgba(255,200,87,.55); }
+    .uav.idle .core{ background: rgba(73,211,138,.95); box-shadow: 0 0 18px rgba(73,211,138,.55); }
+    .uav.goto .core{ background: rgba(255,92,122,.95); box-shadow: 0 0 18px rgba(255,92,122,.55); }
+    .uav .rotor{
+      position:absolute;
+      width:11px;height:11px;border-radius:99px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.06);
+      animation: spin 0.35s linear infinite;
+    }
+    .uav .r1{left:-2px;top:-2px}
+    .uav .r2{right:-2px;top:-2px}
+    .uav .r3{left:-2px;bottom:-2px}
+    .uav .r4{right:-2px;bottom:-2px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    .card{
+      background: var(--card);
+      border:1px solid var(--stroke);
+      border-radius: var(--r);
+      padding:12px;
+      margin-bottom:12px;
+      box-shadow: var(--shadow);
+    }
+    .card h3{margin:0 0 8px 0; font-size:13px; letter-spacing:.2px; display:flex; align-items:center; justify-content:space-between; gap:10px;}
+    .hint{font-size:12px;color:var(--muted); line-height:1.35}
+    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+    .row > *{flex: 1 1 auto}
+    button, select, input{
+      width:100%;
+      padding:10px 10px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      outline:none;
+      font-family:inherit;
+    }
+    button{cursor:pointer; transition: transform .06s ease, background .15s ease, border-color .15s ease;}
+    button:hover{background: rgba(110,168,255,.18); border-color: rgba(110,168,255,.22);}
+    button:active{transform: scale(.99)}
+    .btn-accent{border-color: var(--stroke2); background: rgba(110,168,255,.14)}
+    .btn-good{border-color: rgba(73,211,138,.35); background: rgba(73,211,138,.12)}
+    .btn-warn{border-color: rgba(255,200,87,.35); background: rgba(255,200,87,.12)}
+    .btn-bad{border-color: rgba(255,92,122,.35); background: rgba(255,92,122,.12)}
+    .hr{height:1px;background:rgba(255,255,255,.10); margin:10px 0}
+
+    .kpi{display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:8px;}
+    .box{
+      padding:10px; border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+    }
+    .box strong{display:block; font-size:12px; color:var(--muted); margin-bottom:4px}
+    .box span{font-size:16px}
+
+    .list{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.22);
+      border-radius:14px;
+      padding:10px;
+      max-height: 190px;
+      overflow:auto;
+      font-family: var(--mono);
+      font-size: 12px;
+      white-space: pre-wrap;
+    }
+
+    .statusbar{
+      position: sticky;
+      bottom: 0;
+      margin-top: 10px;
+      padding:10px;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.22);
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .statusbar .line{display:flex; justify-content:space-between; gap:10px; font-size:12px; color: var(--muted);}
+    .statusbar .line b{color: var(--text); font-weight:600}
+
+    /* Modal Street View */
+    .modal{
+      position:fixed;
+      inset:0;
+      background: rgba(0,0,0,.62);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index: 20000;
+      padding: 14px;
+    }
+    .modal.open{display:flex;}
+    .modal-card{
+      width:min(980px, 96vw);
+      height:min(620px, 92vh);
+      background: rgba(10,18,34,.92);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius: 18px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.55);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+    }
+    .modal-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:10px 12px;
+      border-bottom:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+    }
+    .modal-head .title{
+      font-size:13px;
+      color: var(--text);
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+    .modal-head .title span{
+      font-size:12px;
+      color: var(--muted);
+      font-family: var(--mono);
+    }
+    .modal-actions{
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+    .modal-actions button{
+      width:auto;
+      padding:8px 10px;
+      border-radius: 12px;
+    }
+    .modal-body{
+      flex:1;
+      display:flex;
+      background: #000;
+    }
+    .modal-body iframe{
+      border:0;
+      width:100%;
+      height:100%;
+    }
+    .mono{font-family: var(--mono)}
   </style>
 </head>
+
 <body>
-  <div class="container">
-    <div class="top-bar">
-      <div>🍓 <strong>IMPÉRIO MORANGOS</strong> | Gestão Administrativa</div>
-      <div>
-        <input type="file" id="importFile" style="display:none" onchange="Manager.importar(this)">
-        <button onclick="document.getElementById('importFile').click()" style="background:#4a69bd; color:white">📥 RESTAURAR</button>
-        <button onclick="Manager.exportar()" style="background:#e67e22; color:white">📤 BACKUP (.JSON)</button>
+<header>
+  <div class="brand">
+    <strong>Simulador (Sandbox)</strong>
+    <span>Drones simulados • trilha/rota • enviar por voz • satélite + Street View ao final</span>
+  </div>
+  <div class="top-right">
+    <div class="pill" title="Voz (reconhecimento)">
+      <span class="dot" id="voiceDot"></span>
+      <span id="voiceLabel">Voz: desligada</span>
+    </div>
+    <div class="pill" title="Atalhos">
+      <span class="kbd">L</span> lançar
+      <span class="kbd">R</span> retornar
+      <span class="kbd">F</span> buscar
+      <span class="kbd">A</span> add wp
+      <span class="kbd">S</span> enviar rota
+      <span class="kbd">Esc</span> parar
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <aside>
+
+    <div class="card">
+      <h3>Escalas e Cidades <span class="mono" style="font-size:12px;color:var(--muted)">1/2/3</span></h3>
+      <div class="row">
+        <button class="btn-accent" id="btnGlobal">Global (1)</button>
+        <button id="btnContinental">Continental (2)</button>
+        <button id="btnRegional">Regional (3)</button>
+      </div>
+      <div class="hr"></div>
+      <div class="row">
+        <select id="selSulMinas">
+          <option value="PA" selected>Pouso Alegre</option>
+          <option value="BR">Bom Repouso</option>
+          <option value="CG">Congonhal</option>
+          <option value="IT">Itajubá</option>
+          <option value="SM">Santa Rita do Sapucaí</option>
+          <option value="VA">Varginha</option>
+          <option value="PO">Poços de Caldas</option>
+          <option value="AI">Aiuruoca</option>
+          <option value="CA">Cambuí</option>
+          <option value="CR">Caxambu</option>
+          <option value="SL">São Lourenço</option>
+        </select>
+        <button id="btnGoCity">Ir</button>
+      </div>
+      <div class="row">
+        <button id="btnLocate">Minha localização</button>
+      </div>
+      <div class="hint">
+        Clique no mapa para definir a base. <b>Shift+Clique</b> adiciona waypoint rápido.
       </div>
     </div>
 
-    <div class="dash">
-      <div class="card card-vendas"><span>TOTAL VENDIDO</span><span class="card-val" id="dash_total_vendas">R$ 0,00</span></div>
-      <div class="card card-recebido"><span>TOTAL RECEBIDO</span><span class="card-val" id="dash_total_pago">R$ 0,00</span></div>
-      <div class="card card-pendente"><span>A RECEBER</span><span class="card-val" id="dash_saldo_devedor">R$ 0,00</span></div>
+    <div class="card">
+      <h3>Perímetro e Estado</h3>
+      <div class="kpi">
+        <div class="box"><strong>Perímetro</strong><span id="kpiPerimeter">—</span></div>
+        <div class="box"><strong>Drones</strong><span id="kpiDrones">0</span></div>
+        <div class="box"><strong>Status</strong><span id="kpiStatus">Parado</span></div>
+        <div class="box"><strong>Tempo</strong><span id="kpiTime">00:00</span></div>
+      </div>
     </div>
 
-    <aside>
-      <h3>👥 Clientes</h3>
-      <input type="text" id="c_nome" placeholder="Nome">
-      <input type="text" id="c_end" placeholder="Endereço">
-      <button onclick="App.cadastrar('CLI')" style="background:var(--primary); color:white; width:100%">SALVAR CLIENTE</button>
-      <div id="lista_clientes" class="list-box"></div>
+    <div class="card">
+      <h3>Drones, Trilhas e Waypoints</h3>
 
-      <h3>📦 Produtos</h3>
-      <input type="text" id="p_nome" placeholder="Produto">
-      <input type="text" id="p_preco" placeholder="Preço (ex: 4.50)">
-      <button onclick="App.cadastrar('PRO')" style="background:#6c5ce7; color:white; width:100%">SALVAR PRODUTO</button>
-      <div id="lista_produtos" class="list-box"></div>
-
-      <button onclick="Relatorio.gerar()" style="background:var(--secondary); color:white; width:100%; margin-top:20px; padding:12px">📄 RELATÓRIO PDF</button>
-    </aside>
-
-    <main>
-      <div style="border: 2px solid #eee; padding: 15px; border-radius: 10px; background: #fff;">
-        <h4 style="margin:0 0 10px 0">🛒 Lançar Venda</h4>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-          <input type="text" id="v_cli" placeholder="Cliente">
-          <input type="text" id="v_end" placeholder="Endereço">
-        </div>
-        <div style="display:flex; gap:5px; align-items:center;">
-          <select id="v_prod" style="flex:2">
-            <option value="">Selecione o produto</option>
-          </select>
-          <input type="number" id="v_qtd" value="1" style="flex:0.5" min="1">
-          <input type="text" id="v_prc" placeholder="R$ Unid (opcional)" style="flex:0.7">
-          <button onclick="App.venda.add()" style="background:var(--success); color:white">➕</button>
-        </div>
-        <div id="v_preview" style="font-size:11px; color:#e67e22; margin:5px 0"></div>
-        <label>Vencimento:</label>
-        <input type="date" id="v_venc">
-        <button onclick="App.venda.fechar()" style="background:var(--primary); color:white; width:100%; margin-top:10px">FINALIZAR E IMPRIMIR</button>
+      <div class="row">
+        <label class="hint">Qtd. drones
+          <input id="inpDroneCount" type="number" min="0" max="30" value="3"/>
+        </label>
+        <label class="hint">Velocidade (sim.)
+          <input id="inpSpeed" type="number" min="0.2" max="10" step="0.1" value="2.2"/>
+        </label>
       </div>
 
-      <h3>📜 Histórico de Movimentação</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Data</th>
-            <th>Cliente</th>
-            <th>Valor</th>
-            <th>Status / Motivo</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody id="lista_mov"></tbody>
-      </table>
-    </main>
+      <div class="row">
+        <button class="btn-good" id="btnStart">Iniciar</button>
+        <button class="btn-warn" id="btnPause">Pausar (Space)</button>
+        <button class="btn-bad" id="btnStop">Parar (Esc)</button>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="row">
+        <button class="btn-accent" id="btnLaunch">Lançar drones (L)</button>
+        <button id="btnRecall">Retornar drones (R)</button>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="row">
+        <select id="selDroneId"></select>
+      </div>
+
+      <div class="hint">Buscar endereço (Nominatim):</div>
+      <div class="row">
+        <input id="inpStreet" placeholder="Ex.: Av. Doutor Lisboa, Pouso Alegre, MG" />
+      </div>
+      <div class="row">
+        <button class="btn-accent" id="btnFindStreet">Buscar (F)</button>
+        <button id="btnAddWaypoint">Adicionar waypoint (A)</button>
+      </div>
+
+      <div class="row">
+        <button class="btn-accent" id="btnSendRoute">Enviar rota (S)</button>
+        <button id="btnSendToSearched">Enviar ao pesquisado</button>
+      </div>
+
+      <div class="row">
+        <button id="btnAddAndSend">Add waypoint + Enviar</button>
+        <button id="btnClearWaypoints">Limpar waypoints</button>
+      </div>
+
+      <div class="row">
+        <button id="btnClearTrails">Limpar trilhas</button>
+        <button id="btnMapSat">Satélite</button>
+        <button id="btnMapNormal">Normal</button>
+      </div>
+
+      <div class="hint mono" id="wpInfo">Waypoints: 0</div>
+      <div class="list" id="wpList"></div>
+
+      <div class="hint" style="margin-top:10px">
+        Ao concluir o último waypoint: ativa Satélite e abre Street View (se permitido).
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Missões (Histórico)</h3>
+      <div class="list" id="missionList"></div>
+      <div class="row" style="margin-top:10px">
+        <button id="btnClearMissions">Limpar histórico</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Voz</h3>
+      <div class="row">
+        <button class="btn-accent" id="btnVoice">Ativar comandos de voz</button>
+        <select id="selLang">
+          <option value="pt-BR" selected>Português (Brasil)</option>
+          <option value="en-US">English (US)</option>
+        </select>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <button class="btn-accent" id="btnTts">Ativar avisos de voz (TTS)</button>
+        <select id="selTtsVoice"></select>
+      </div>
+
+      <div class="hint mono" style="margin-top:10px">
+        Zoom: "zoom mais", "zoom menos", "zoom mais 2", "zoom nível 16", "remover zoom"<br>
+        Presets: "global", "continental", "regional"<br>
+        Mapa: "satélite", "mapa normal"<br>
+        Endereço: "buscar endereço ..."<br>
+        Enviar: "enviar drone para ...", "manda drone 2 para ..."<br>
+        Rota: "adicionar waypoint", "enviar rota", "limpar waypoints", "limpar trilhas"<br>
+        Cidades: "ir para congonhal", "ir para varginha", etc.
+      </div>
+    </div>
+
+    <div class="statusbar">
+      <div class="line"><span>Mapa:</span> <b id="sbMap">Normal</b></div>
+      <div class="line"><span>Drone:</span> <b id="sbDrone">—</b></div>
+      <div class="line"><span>Destino:</span> <b id="sbDest">—</b></div>
+    </div>
+
+  </aside>
+
+  <main>
+    <div id="map"></div>
+  </main>
+</div>
+
+<!-- Modal Street View -->
+<div class="modal" id="svModal" role="dialog" aria-modal="true">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div class="title">
+        <div><b>Street View (destino)</b></div>
+        <span id="svCoords">—</span>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-accent" id="btnOpenSvTab">Abrir Street View</button>
+        <button id="btnCloseSv">Fechar</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <iframe id="svFrame" title="Street View"></iframe>
+    </div>
   </div>
+</div>
 
-  <div id="cupom">
-    <center><h2>IMPÉRIO MORANGOS</h2></center><hr>
-    <strong>CLIENTE:</strong> <span id="p_cli"></span><br>
-    <strong>ENDEREÇO:</strong> <span id="p_end"></span><br>
-    <strong>VENCIMENTO:</strong> <span id="p_venc"></span><hr>
-    <div id="p_itens"></div><hr>
-    <div style="text-align:right"><strong>TOTAL: <span id="p_total"></span></strong></div>
-  </div>
+<script>
+/* ========= utils ========= */
+const $ = (id) => document.getElementById(id);
+function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+function nowStr(){
+  const d = new Date();
+  return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+}
+function formatMMSS(sec){
+  sec = Math.max(0, Math.floor(sec));
+  const m = String(Math.floor(sec / 60)).padStart(2,"0");
+  const s = String(sec % 60).padStart(2,"0");
+  return `${m}:${s}`;
+}
+function normalizeCmd(s){
+  return (s||"")
+    .toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+    .trim();
+}
+function logTo(el, msg){
+  const box = $(el);
+  box.textContent += msg + "\n";
+  box.scrollTop = box.scrollHeight;
+}
+function mission(msg, kind="info"){
+  const prefix = kind==="ok"?"✅":kind==="warn"?"⚠️":kind==="bad"?"🛑":"ℹ️";
+  logTo("missionList", `[${nowStr()}] ${prefix} ${msg}`);
+}
 
-  <script>
-    const DB = {
-      get: (k) => {
-        try { return JSON.parse(localStorage.getItem(k)) || []; } catch(e){ return []; }
-      },
-      set: (k, v) => localStorage.setItem(k, JSON.stringify(v))
+/* ========= TTS (avisos de voz) ========= */
+let ttsEnabled = false;
+let ttsVoice = null;
+
+function loadTtsVoices(){
+  const sel = $("selTtsVoice");
+  sel.innerHTML = "";
+  if (!("speechSynthesis" in window)) {
+    const opt = document.createElement("option");
+    opt.textContent = "TTS indisponível";
+    opt.value = "";
+    sel.appendChild(opt);
+    return;
+  }
+  const voices = speechSynthesis.getVoices();
+  if (!voices.length){
+    const opt = document.createElement("option");
+    opt.textContent = "Carregando vozes…";
+    opt.value = "";
+    sel.appendChild(opt);
+    return;
+  }
+  const sorted = voices.slice().sort((a,b)=>{
+    const ap = (a.lang||"").toLowerCase().startsWith("pt") ? 0 : 1;
+    const bp = (b.lang||"").toLowerCase().startsWith("pt") ? 0 : 1;
+    return ap - bp;
+  });
+  sorted.forEach((v, idx)=>{
+    const opt = document.createElement("option");
+    opt.value = String(idx);
+    opt.textContent = `${v.name} (${v.lang})`;
+    sel.appendChild(opt);
+  });
+  const ptIndex = sorted.findIndex(v => (v.lang||"").toLowerCase().startsWith("pt"));
+  sel.value = String(Math.max(0, ptIndex));
+  ttsVoice = sorted[parseInt(sel.value,10)];
+  sel.onchange = () => {
+    ttsVoice = sorted[parseInt(sel.value,10)];
+    mission(`TTS: voz selecionada: ${ttsVoice?.name || "—"}`, "info");
+  };
+}
+if ("speechSynthesis" in window){
+  speechSynthesis.onvoiceschanged = loadTtsVoices;
+  setTimeout(loadTtsVoices, 250);
+}
+
+function speak(text){
+  if (!ttsEnabled) return;
+  if (!("speechSynthesis" in window)) return;
+  try{
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    if (ttsVoice) u.voice = ttsVoice;
+    u.lang = (ttsVoice?.lang) || "pt-BR";
+    u.rate = 1.02;
+    u.pitch = 1.0;
+    speechSynthesis.speak(u);
+  }catch{}
+}
+$("btnTts").onclick = () => {
+  ttsEnabled = !ttsEnabled;
+  $("btnTts").textContent = ttsEnabled ? "Desativar avisos de voz (TTS)" : "Ativar avisos de voz (TTS)";
+  mission(ttsEnabled ? "Avisos de voz (TTS) ativados." : "Avisos de voz (TTS) desativados.", ttsEnabled ? "ok" : "warn");
+  if (ttsEnabled) speak("Avisos de voz ativados.");
+};
+
+/* ========= cities ========= */
+const SUL_MINAS = {
+  PA: { name:"Pouso Alegre",         lat:-22.2290, lng:-45.9360, zoom:14 },
+  BR: { name:"Bom Repouso",          lat:-22.4670, lng:-46.1450, zoom:14 },
+  CG: { name:"Congonhal",            lat:-22.1485, lng:-46.0422, zoom:14 },
+  IT: { name:"Itajubá",              lat:-22.4220, lng:-45.4590, zoom:14 },
+  SM: { name:"Santa Rita do Sapucaí",lat:-22.2520, lng:-45.7030, zoom:14 },
+  VA: { name:"Varginha",             lat:-21.5540, lng:-45.4300, zoom:13 },
+  PO: { name:"Poços de Caldas",      lat:-21.7870, lng:-46.5610, zoom:13 },
+  AI: { name:"Aiuruoca",             lat:-21.9730, lng:-44.6040, zoom:14 },
+  CA: { name:"Cambuí",               lat:-22.6100, lng:-46.0560, zoom:14 },
+  CR: { name:"Caxambu",              lat:-21.9780, lng:-44.9320, zoom:14 },
+  SL: { name:"São Lourenço",         lat:-22.1160, lng:-45.0540, zoom:14 },
+};
+const VIEW_PRESETS = {
+  GLOBAL:      { center:[0,0], zoom:2 },
+  CONTINENTAL: { center:[-15,-55], zoom:4 },
+  REGIONAL:    { center:[SUL_MINAS.PA.lat, SUL_MINAS.PA.lng], zoom:10 },
+};
+
+/* ========= state ========= */
+const state = {
+  running:false, paused:false, t:0, tickHz:20, lastFrame: performance.now(),
+  baseLatLng:null,
+  perimeter:null,
+  patrolPoints:[],
+  droneModels:[],
+  waypoints:[],
+  activeBase: "normal",
+};
+
+/* ========= map layers ========= */
+const normalLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  maxZoom:19,
+  attribution:'&copy; OpenStreetMap'
+});
+const satLayer = L.tileLayer(
+  "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+  { maxZoom:19, attribution:'Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community' }
+);
+
+const map = L.map("map", { zoomControl:true, layers:[normalLayer] })
+  .setView(VIEW_PRESETS.REGIONAL.center, VIEW_PRESETS.REGIONAL.zoom);
+
+L.control.layers(
+  { "Mapa normal": normalLayer, "Satélite": satLayer },
+  {},
+  { position:"topright", collapsed:true }
+).addTo(map);
+
+function setSbMap(text){ $("sbMap").textContent = text; }
+function setSbDest(text){ $("sbDest").textContent = text; }
+function setSbDrone(text){ $("sbDrone").textContent = text; }
+function setStatus(text){ $("kpiStatus").textContent = text; }
+
+function setBaseLayer(mode){
+  if (mode === "sat"){
+    if (map.hasLayer(normalLayer)) map.removeLayer(normalLayer);
+    if (!map.hasLayer(satLayer)) map.addLayer(satLayer);
+    state.activeBase = "sat";
+    setSbMap("Satélite");
+    mission("Camada Satélite ativada.", "ok");
+  } else {
+    if (map.hasLayer(satLayer)) map.removeLayer(satLayer);
+    if (!map.hasLayer(normalLayer)) map.addLayer(normalLayer);
+    state.activeBase = "normal";
+    setSbMap("Normal");
+    mission("Mapa normal ativado.", "info");
+  }
+}
+
+/* ========= overlay (drones) ========= */
+const airspace = document.createElement("div");
+airspace.className = "airspace";
+map.getContainer().appendChild(airspace);
+
+function makeUavEl(){
+  const el = document.createElement("div");
+  el.className = "uav";
+  el.innerHTML = `
+    <div class="body">
+      <div class="rotor r1"></div><div class="rotor r2"></div>
+      <div class="rotor r3"></div><div class="rotor r4"></div>
+      <div class="core"></div>
+    </div>`;
+  airspace.appendChild(el);
+  return el;
+}
+function setUavMode(el, mode){
+  el.classList.toggle("recall", mode === "recall");
+  el.classList.toggle("idle", mode === "idle");
+  el.classList.toggle("goto", mode === "goto");
+}
+function latLngToPixel(lat, lng){
+  const pt = map.latLngToContainerPoint([lat, lng]);
+  return { x: pt.x, y: pt.y };
+}
+
+/* ========= perimeter draw ========= */
+const drawnItems = new L.FeatureGroup();
+map.addLayer(drawnItems);
+
+const drawControl = new L.Control.Draw({
+  draw: {
+    polygon: { allowIntersection:false, showArea:true, shapeOptions:{ color:"#6ea8ff" } },
+    rectangle:false, circle:false, circlemarker:false, marker:false, polyline:false
+  },
+  edit: { featureGroup: drawnItems, remove:true }
+});
+map.addControl(drawControl);
+
+let baseMarker = null;
+
+map.on("click", (e) => {
+  if (e.originalEvent && e.originalEvent.shiftKey){
+    addWaypointFromLatLng(e.latlng, `Waypoint (mapa): ${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)}`);
+    return;
+  }
+  state.baseLatLng = e.latlng;
+  if (baseMarker) baseMarker.setLatLng(e.latlng);
+  else baseMarker = L.marker(e.latlng, { title:"Base (home)" }).addTo(map);
+  mission(`Base definida em ${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)}`, "ok");
+});
+
+map.on(L.Draw.Event.CREATED, (evt) => {
+  drawnItems.clearLayers();
+  const layer = evt.layer;
+  drawnItems.addLayer(layer);
+  if (layer instanceof L.Polygon){
+    state.perimeter = layer.getLatLngs()[0];
+    updatePerimeterKPI();
+    regenPatrolPoints();
+    mission("Perímetro definido. Patrulha recalculada.", "ok");
+  }
+});
+map.on(L.Draw.Event.EDITED, () => {
+  const layers = drawnItems.getLayers();
+  const poly = layers.find(l => l instanceof L.Polygon);
+  if (poly){
+    state.perimeter = poly.getLatLngs()[0];
+    updatePerimeterKPI();
+    regenPatrolPoints();
+    mission("Perímetro editado. Patrulha recalculada.", "ok");
+  }
+});
+map.on(L.Draw.Event.DELETED, () => {
+  state.perimeter = null;
+  state.patrolPoints = [];
+  updatePerimeterKPI();
+  mission("Perímetro removido.", "warn");
+});
+
+function updatePerimeterKPI(){
+  if (!state.perimeter || state.perimeter.length < 3){
+    $("kpiPerimeter").textContent = "—";
+    return;
+  }
+  let meters = 0;
+  for (let i=0;i<state.perimeter.length;i++){
+    const a = state.perimeter[i];
+    const b = state.perimeter[(i+1)%state.perimeter.length];
+    meters += map.distance(a,b);
+  }
+  $("kpiPerimeter").textContent = `${Math.round(meters)} m`;
+}
+
+/* ========= patrol points ========= */
+function pointInPolygon(latlng, poly){
+  const x = latlng.lng, y = latlng.lat;
+  let inside = false;
+  for (let i=0, j=poly.length-1; i<poly.length; j=i++){
+    const xi = poly[i].lng, yi = poly[i].lat;
+    const xj = poly[j].lng, yj = poly[j].lat;
+    const intersect = ((yi > y) !== (yj > y)) &&
+      (x < (xj - xi) * (y - yi) / ((yj - yi) || 1e-12) + xi);
+    if (intersect) inside = !inside;
+  }
+  return inside;
+}
+function randomPointInPerimeter(){
+  const lats = state.perimeter.map(p => p.lat);
+  const lngs = state.perimeter.map(p => p.lng);
+  const minLat = Math.min(...lats), maxLat = Math.max(...lats);
+  const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
+  for (let tries=0; tries<2000; tries++){
+    const lat = minLat + Math.random()*(maxLat-minLat);
+    const lng = minLng + Math.random()*(maxLng-minLng);
+    const p = L.latLng(lat, lng);
+    if (pointInPolygon(p, state.perimeter)) return p;
+  }
+  return L.polygon(state.perimeter).getBounds().getCenter();
+}
+function regenPatrolPoints(){
+  state.patrolPoints = [];
+  if (!state.perimeter) return;
+  for (let i=0;i<18;i++) state.patrolPoints.push(randomPointInPerimeter());
+}
+function ensureBase(){
+  if (!state.baseLatLng){
+    state.baseLatLng = map.getCenter();
+    if (baseMarker) baseMarker.setLatLng(state.baseLatLng);
+    else baseMarker = L.marker(state.baseLatLng, { title:"Base (home)" }).addTo(map);
+    mission("Base não definida: usando centro do mapa como base.", "warn");
+  }
+}
+
+/* ========= waypoints ========= */
+let tempSearchMarker = null;
+let lastGeocodeResult = null;
+
+function refreshWaypointsUI(){
+  $("wpInfo").textContent = `Waypoints: ${state.waypoints.length}`;
+  $("wpList").textContent = state.waypoints.map((w,i)=>`${String(i+1).padStart(2,"0")}) ${w.label}`).join("\n") || "(vazio)";
+}
+
+async function geocodeStreet(q){
+  const url = "https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" + encodeURIComponent(q);
+  const res = await fetch(url, { headers: { "Accept": "application/json" } });
+  if (!res.ok) throw new Error("Falha na busca: HTTP " + res.status);
+  const data = await res.json();
+  if (!data || !data[0]) return null;
+  return {
+    latlng: L.latLng(parseFloat(data[0].lat), parseFloat(data[0].lon)),
+    label: data[0].display_name
+  };
+}
+
+async function findStreet(){
+  const q = ($("inpStreet").value || "").trim();
+  if (!q){ mission("Digite uma rua/endereço para buscar.", "warn"); speak("Digite um endereço para buscar."); return; }
+  try{
+    mission(`Buscando: "${q}" ...`, "info");
+    const r = await geocodeStreet(q);
+    if (!r){ mission("Nada encontrado para essa busca.", "warn"); speak("Não encontrei esse endereço."); return; }
+    lastGeocodeResult = r;
+    map.setView(r.latlng, Math.max(map.getZoom(), 16));
+    if (!tempSearchMarker){
+      tempSearchMarker = L.marker(r.latlng, { title:"Resultado da busca" }).addTo(map);
+    } else {
+      tempSearchMarker.setLatLng(r.latlng);
+    }
+    tempSearchMarker.bindTooltip("Resultado (use 'Adicionar waypoint' ou 'Enviar ao pesquisado')", {permanent:false});
+    setSbDest(r.label);
+    mission("Resultado encontrado.", "ok");
+    speak("Endereço encontrado.");
+  }catch(e){
+    mission("Erro ao buscar: " + e.message, "bad");
+    speak("Erro ao buscar o endereço.");
+  }
+}
+
+function addWaypointFromLatLng(latlng, label){
+  const idx = state.waypoints.length + 1;
+  const marker = L.circleMarker(latlng, {
+    radius: 7, color: "#6ea8ff", weight: 2, fillColor: "#6ea8ff", fillOpacity: 0.75
+  }).addTo(map);
+  marker.bindTooltip(`WP ${idx}`, {permanent:false});
+  state.waypoints.push({ latlng, label, marker });
+  refreshWaypointsUI();
+  mission(`Waypoint adicionado (#${idx}).`, "ok");
+  speak(`Waypoint ${idx} adicionado.`);
+}
+function addWaypointFromSearch(){
+  if (!lastGeocodeResult){ mission("Faça uma busca primeiro (Buscar).", "warn"); speak("Faça uma busca primeiro."); return; }
+  addWaypointFromLatLng(lastGeocodeResult.latlng, lastGeocodeResult.label);
+}
+function clearWaypoints(){
+  state.waypoints.forEach(w => { try{ map.removeLayer(w.marker); }catch{} });
+  state.waypoints = [];
+  refreshWaypointsUI();
+  mission("Waypoints limpos.", "info");
+  speak("Waypoints limpos.");
+}
+
+/* ========= drones + trails + routes ========= */
+function refreshDroneSelect(){
+  const sel = $("selDroneId");
+  sel.innerHTML = "";
+  if (state.droneModels.length === 0){
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = "Nenhum drone";
+    sel.appendChild(opt);
+    setSbDrone("—");
+    return;
+  }
+  state.droneModels.forEach(d => {
+    const opt = document.createElement("option");
+    opt.value = String(d.id);
+    opt.textContent = `Drone ${d.id}`;
+    sel.appendChild(opt);
+  });
+  sel.value = sel.value || String(state.droneModels[0].id);
+  setSbDrone(`Drone ${sel.value}`);
+}
+$("selDroneId").addEventListener("change", () => {
+  const v = $("selDroneId").value;
+  setSbDrone(v ? `Drone ${v}` : "—");
+});
+
+function getSelectedDrone(){
+  if (state.droneModels.length === 0) return null;
+  const id = parseInt(($("selDroneId").value || "0"), 10);
+  return state.droneModels.find(x => x.id === id) || state.droneModels[0];
+}
+
+function clearDrones(){
+  state.droneModels.forEach(d => {
+    if (d.uavEl && d.uavEl.parentNode) d.uavEl.parentNode.removeChild(d.uavEl);
+    if (d.trailLine) { try{ map.removeLayer(d.trailLine); }catch{} }
+    if (d.routeLine) { try{ map.removeLayer(d.routeLine); }catch{} }
+  });
+  state.droneModels = [];
+  $("kpiDrones").textContent = "0";
+  refreshDroneSelect();
+}
+
+function initDroneLines(d){
+  d.trailLatLngs = [L.latLng(d.lat, d.lng)];
+  d.trailLine = L.polyline(d.trailLatLngs, { color: "#6ea8ff", weight: 3, opacity: 0.55 }).addTo(map);
+  d.routeLine = L.polyline([], { color: "#ff5c7a", weight: 3, opacity: 0.70, dashArray: "10 8" }).addTo(map);
+}
+function updateDroneTrail(d){
+  const maxPts = 240;
+  d.trailLatLngs.push(L.latLng(d.lat, d.lng));
+  if (d.trailLatLngs.length > maxPts) d.trailLatLngs.splice(0, d.trailLatLngs.length - maxPts);
+  d.trailLine.setLatLngs(d.trailLatLngs);
+}
+function updateDroneRouteLine(d){
+  const pts = [L.latLng(d.lat, d.lng)];
+  if (d.mode === "goto" && d.missionQueue && d.missionQueue.length){
+    pts.push(d.missionQueue[0].latlng);
+    for (let i=1;i<d.missionQueue.length;i++) pts.push(d.missionQueue[i].latlng);
+  } else if (d.target){
+    pts.push(L.latLng(d.target.lat, d.target.lng));
+  }
+  d.routeLine.setLatLngs(pts);
+}
+
+function launchDrones(){
+  if (!state.perimeter){
+    mission("Defina um perímetro antes de lançar drones.", "bad");
+    speak("Defina um perímetro antes de lançar drones.");
+    return;
+  }
+  ensureBase();
+  clearDrones();
+
+  const count = clamp(parseInt($("inpDroneCount").value || "0", 10), 0, 30);
+  if (count === 0){ mission("Qtd. de drones = 0.", "warn"); speak("Quantidade de drones está zero."); return; }
+  if (state.patrolPoints.length === 0) regenPatrolPoints();
+
+  const mapRect = map.getContainer().getBoundingClientRect();
+
+  for (let i=0;i<count;i++){
+    const id = i+1;
+    const start = state.baseLatLng;
+    const target = state.patrolPoints[i % state.patrolPoints.length];
+    const uavEl = makeUavEl();
+
+    const spawnX = Math.random() * mapRect.width;
+    const spawnY = -50 - Math.random() * 140;
+
+    const d = {
+      id,
+      lat: start.lat,
+      lng: start.lng,
+      target,
+      mode:"patrol",   // patrol | recall | idle | goto
+      targetIndex: i % state.patrolPoints.length,
+      uavEl,
+      flyInT: 0,
+      flySpawn: { x: spawnX, y: spawnY },
+      missionQueue: []
     };
+    state.droneModels.push(d);
+    initDroneLines(d);
+    updateDroneRouteLine(d);
+  }
 
-    const formatBR = (v) => {
-      const n = Number(v) || 0;
-      return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n);
-    };
+  $("kpiDrones").textContent = String(count);
+  refreshDroneSelect();
+  mission(`Lançados ${count} drones (simulados).`, "ok");
+  speak(`Lançados ${count} drones.`);
+  renderUavOverlay(true);
+}
 
-    const App = {
-      carrinho: [],
+function recallDrones(){
+  if (state.droneModels.length === 0){ mission("Nenhum drone para retornar.", "warn"); speak("Nenhum drone para retornar."); return; }
+  ensureBase();
+  state.droneModels.forEach(d => {
+    d.mode = "recall";
+    d.missionQueue = [];
+    d.target = state.baseLatLng;
+    updateDroneRouteLine(d);
+  });
+  mission("Retorno de drones (simulado).", "ok");
+  speak("Drones retornando à base.");
+}
 
-      init() {
-        const hoje = new Date().toISOString().split('T')[0];
-        document.getElementById('v_venc').value = hoje;
-        this.render();
-      },
+function assignRouteToDrone(drone){
+  if (state.waypoints.length === 0){
+    mission("Adicione ao menos 1 waypoint antes de enviar rota.", "warn");
+    speak("Adicione pelo menos um waypoint antes de enviar a rota.");
+    return false;
+  }
+  drone.missionQueue = state.waypoints.map(w => ({ latlng: w.latlng, label: w.label }));
+  drone.mode = "goto";
+  drone.target = drone.missionQueue[0].latlng;
 
-      cadastrar(tipo) {
-        if (tipo === 'CLI') {
-          const nome = document.getElementById('c_nome').value.trim();
-          const endereco = document.getElementById('c_end').value.trim();
-          if (!nome) return alert('Informe o nome do cliente.');
-          const lista = DB.get('cli');
-          lista.push({ id: Date.now(), nome, endereco });
-          DB.set('cli', lista);
-          document.getElementById('c_nome').value = '';
-          document.getElementById('c_end').value = '';
-          this.render();
-        } else {
-          const nome = document.getElementById('p_nome').value.trim();
-          const precoRaw = document.getElementById('p_preco').value.trim();
-          const preco = precoRaw ? parseFloat(precoRaw.toString().replace(',', '.')) : 0;
-          if (!nome) return alert('Informe o nome do produto.');
-          const lista = DB.get('pro');
-          lista.push({ id: Date.now(), nome, preco: isNaN(preco) ? 0 : preco });
-          DB.set('pro', lista);
-          document.getElementById('p_nome').value = '';
-          document.getElementById('p_preco').value = '';
-          this.render();
+  updateDroneRouteLine(drone);
+  setSbDest(drone.missionQueue[0].label || "Waypoint");
+  mission(`Drone ${drone.id}: rota atribuída com ${drone.missionQueue.length} waypoint(s).`, "ok");
+  speak(`Drone ${drone.id} recebeu uma rota com ${drone.missionQueue.length} destinos.`);
+  return true;
+}
+
+function sendRouteToSelectedDrone(){
+  const d = getSelectedDrone();
+  if (!d){ mission("Lance drones antes de enviar rota.", "warn"); speak("Lance drones antes de enviar rota."); return; }
+  if (assignRouteToDrone(d)){
+    if (!state.running) start();
+  }
+}
+
+function sendDroneToLatLng(drone, latlng, label="Destino"){
+  if (!drone){ mission("Nenhum drone disponível.", "warn"); speak("Nenhum drone disponível."); return; }
+  drone.missionQueue = [{ latlng, label }];
+  drone.mode = "goto";
+  drone.target = latlng;
+  updateDroneRouteLine(drone);
+  setSbDest(label);
+  mission(`Drone ${drone.id}: enviado ao destino pesquisado.`, "ok");
+  speak(`Drone ${drone.id} enviado ao destino.`);
+  if (!state.running) start();
+}
+
+function sendDroneToSearched(){
+  const d = getSelectedDrone();
+  if (!d){ mission("Lance drones antes de enviar.", "warn"); speak("Lance drones antes de enviar."); return; }
+  if (!lastGeocodeResult){
+    mission("Nenhum endereço pesquisado ainda.", "warn");
+    speak("Nenhum endereço pesquisado.");
+    return;
+  }
+  sendDroneToLatLng(d, lastGeocodeResult.latlng, lastGeocodeResult.label);
+}
+
+function addAndSendRoute(){
+  if (!lastGeocodeResult){
+    mission("Faça uma busca primeiro.", "warn");
+    speak("Faça uma busca primeiro.");
+    return;
+  }
+  addWaypointFromSearch();
+  sendRouteToSelectedDrone();
+}
+
+function clearTrails(){
+  state.droneModels.forEach(d => {
+    d.trailLatLngs = [L.latLng(d.lat, d.lng)];
+    d.trailLine.setLatLngs(d.trailLatLngs);
+  });
+  mission("Trilhas (breadcrumbs) limpas.", "info");
+  speak("Trilhas limpas.");
+}
+
+function advanceTargetsIfNeeded(){
+  if (!state.perimeter || state.patrolPoints.length === 0) return;
+  state.droneModels.forEach(d => {
+    if (d.mode !== "patrol") return;
+    const dist = map.distance(L.latLng(d.lat,d.lng), d.target);
+    if (dist < 18){
+      d.targetIndex = (d.targetIndex + 1) % state.patrolPoints.length;
+      d.target = state.patrolPoints[d.targetIndex];
+      updateDroneRouteLine(d);
+    }
+  });
+}
+
+/* ========= Street View ========= */
+function streetViewUrl(lat, lng){
+  return `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lat},${lng}`;
+}
+function openStreetViewModal(lat, lng){
+  const url = streetViewUrl(lat, lng);
+  $("svCoords").textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+  $("svFrame").src = url;
+  $("svModal").classList.add("open");
+  $("btnOpenSvTab").onclick = () => window.open(url, "_blank", "noopener");
+}
+function closeStreetViewModal(){
+  $("svModal").classList.remove("open");
+  $("svFrame").src = "about:blank";
+}
+$("btnCloseSv").onclick = closeStreetViewModal;
+$("svModal").addEventListener("click", (e) => {
+  if (e.target && e.target.id === "svModal") closeStreetViewModal();
+});
+
+/* ========= simulation step ========= */
+function stepDrones(dt){
+  const speed = clamp(parseFloat($("inpSpeed").value || "2.2"), 0.2, 10);
+  if (state.droneModels.length === 0) return;
+
+  advanceTargetsIfNeeded();
+
+  state.droneModels.forEach((d) => {
+    const cur = L.latLng(d.lat, d.lng);
+
+    if (d.mode === "goto" && d.missionQueue && d.missionQueue.length){
+      d.target = d.missionQueue[0].latlng;
+    }
+
+    const tgt = d.target ? L.latLng(d.target.lat, d.target.lng) : cur;
+    const dist = map.distance(cur, tgt);
+
+    if (dist < 18){
+      if (d.mode === "recall") {
+        d.mode = "idle";
+        updateDroneRouteLine(d);
+        mission(`Drone ${d.id} retornou à base.`, "ok");
+        speak(`Drone ${d.id} retornou à base.`);
+        return;
+      }
+
+      if (d.mode === "goto" && d.missionQueue && d.missionQueue.length){
+        const reached = d.missionQueue.shift();
+        mission(`Drone ${d.id} chegou: ${reached.label}`, "ok");
+        speak(`Drone ${d.id} chegou ao destino.`);
+
+        if (d.missionQueue.length){
+          d.target = d.missionQueue[0].latlng;
+          setSbDest(d.missionQueue[0].label || "Waypoint");
+          updateDroneRouteLine(d);
+          return;
         }
-      },
 
-      excluirCadastro(tipo, id) {
-        if (!confirm("Apagar do cadastro?")) return;
-        const chave = tipo === 'CLI' ? 'cli' : 'pro';
-        DB.set(chave, DB.get(chave).filter(i => i.id !== id));
-        this.render();
-      },
-
-      venda: {
-        add() {
-          const prodSel = document.getElementById('v_prod');
-          const p = prodSel.value;
-          const q = parseFloat(document.getElementById('v_qtd').value) || 1;
-          let vRaw = document.getElementById('v_prc').value.trim();
-
-          // If price not provided, try product price
-          let v;
-          if (vRaw) {
-            v = parseFloat(vRaw.replace(',', '.'));
-          } else {
-            const pro = DB.get('pro').find(pp => pp.nome === p);
-            v = pro ? Number(pro.preco) : NaN;
-          }
-          if (!p || isNaN(v) || v <= 0) return alert('Produto ou preço inválido.');
-          App.carrinho.push({ p, q, t: Number((q * v).toFixed(2)) });
-          document.getElementById('v_preview').innerText = "Carrinho: " + App.carrinho.map(i => `${i.q}x ${i.p}`).join(', ');
-        },
-        fechar() {
-          const cli = document.getElementById('v_cli').value.trim();
-          const end = document.getElementById('v_end').value.trim();
-          const venc = document.getElementById('v_venc').value;
-          if (!cli) return alert('Informe o cliente.');
-          if (App.carrinho.length === 0) return alert("Carrinho vazio!");
-          const total = App.carrinho.reduce((a, b) => a + b.t, 0).toFixed(2);
-
-          const mov = {
-            id: Date.now(),
-            data: new Date().toISOString(),
-            cli, end, venc,
-            val: total,
-            desc: App.carrinho.map(i => `${i.q}x ${i.p}`).join(', '),
-            status: (venc === new Date().toISOString().split('T')[0]) ? 'PAGO' : 'ABERTO',
-            motivo: (venc === new Date().toISOString().split('T')[0]) ? 'Venda à Vista' : 'Boleto/Prazo'
-          };
-
-          const hist = DB.get('mov'); hist.push(mov); DB.set('mov', hist);
-
-          // Print
-          document.getElementById('p_cli').innerText = cli;
-          document.getElementById('p_end').innerText = end;
-          document.getElementById('p_venc').innerText = new Date(venc).toLocaleDateString();
-          document.getElementById('p_itens').innerHTML = App.carrinho.map(i => `<div>${i.q}x ${i.p} - ${formatBR(i.t)}</div>`).join('');
-          document.getElementById('p_total').innerText = formatBR(total);
-          window.print();
-
-          // reset cart and UI
-          App.carrinho = [];
-          document.getElementById('v_preview').innerText = '';
-          document.getElementById('v_prc').value = '';
-          document.getElementById('v_qtd').value = 1;
-          this_render = App; // no-op to avoid linter warning inlined
-          App.render();
+        d.mode = "patrol";
+        if (state.patrolPoints.length > 0){
+          d.target = state.patrolPoints[d.targetIndex % state.patrolPoints.length];
         }
-      },
+        updateDroneRouteLine(d);
 
-      baixarBoleto(id) {
-        const motivo = prompt("Motivo do Pagamento (Ex: Pix, Dinheiro, Transferência):", "Pix");
-        if (motivo === null) return;
-        const hist = DB.get('mov');
-        const idx = hist.findIndex(m => m.id === id);
-        if (idx === -1) return;
-        hist[idx].status = 'PAGO';
-        hist[idx].motivo = motivo;
-        DB.set('mov', hist);
-        this.render();
-      },
+        mission(`Drone ${d.id} concluiu a rota (último waypoint).`, "ok");
+        speak("Rota concluída. Alternando para satélite e abrindo Street View.");
 
-      apagarNota(id) {
-        if (!confirm("ATENÇÃO: Deseja apagar esta nota permanentemente? Isso alterará seu saldo financeiro.")) return;
-        const hist = DB.get('mov').filter(m => m.id !== id);
-        DB.set('mov', hist);
-        this.render();
-      },
-
-      render() {
-        const movs = DB.get('mov').slice().reverse();
-        const clis = DB.get('cli');
-        const pros = DB.get('pro');
-
-        const vTot = movs.reduce((a,b) => a + parseFloat(b.val || 0), 0);
-        const pTot = movs.filter(m => m.status === 'PAGO').reduce((a,b) => a + parseFloat(b.val || 0), 0);
-        document.getElementById('dash_total_vendas').innerText = formatBR(vTot);
-        document.getElementById('dash_total_pago').innerText = formatBR(pTot);
-        document.getElementById('dash_saldo_devedor').innerText = formatBR(vTot - pTot);
-
-        document.getElementById('lista_clientes').innerHTML = clis.map(c => `<div class="item"><div><strong>${c.nome}</strong><br><small>${c.endereco || ''}</small></div><div><button onclick="document.getElementById('v_cli').value='${c.nome}'; document.getElementById('v_end').value='${c.endereco || ''}'" style="background:var(--success); color:white">✅</button><button onclick="App.excluirCadastro('CLI', ${c.id})" class="btn-del">🗑️</button></div></div>`).join('');
-        document.getElementById('lista_produtos').innerHTML = pros.map(p => `<div class="item"><span>${p.nome} ${p.preco ? `- ${formatBR(p.preco)}` : ''}</span><div><button onclick="document.getElementById('v_prod').value='${p.nome}'; document.getElementById('v_prc').value='${p.preco ? p.preco : ''}'" style="background:#6c5ce7; color:white">🛒</button><button onclick="App.excluirCadastro('PRO', ${p.id})" class="btn-del">🗑️</button></div></div>`).join('');
-
-        // populate product select
-        const sel = document.getElementById('v_prod');
-        sel.innerHTML = `<option value="">Selecione o produto</option>` + pros.map(p => `<option value="${p.nome}">${p.nome}${p.preco ? ' - ' + formatBR(p.preco) : ''}</option>`).join('');
-
-        document.getElementById('lista_mov').innerHTML = movs.map(m => `
-          <tr>
-            <td>${new Date(m.data).toLocaleDateString()}</td>
-            <td><strong>${m.cli}</strong></td>
-            <td>${formatBR(m.val)}</td>
-            <td><span class="status-${m.status.toLowerCase()}">${m.status}</span><br><small>${m.motivo || ''}</small></td>
-            <td>
-              ${m.status === 'ABERTO' ? `<button class="btn-quitar" onclick="App.baixarBoleto(${m.id})">QUITAR</button>` : ''}
-              <button class="btn-del" onclick="App.apagarNota(${m.id})">🗑️ APAGAR</button>
-            </td>
-          </tr>`).join('');
+        setBaseLayer("sat");
+        openStreetViewModal(reached.latlng.lat, reached.latlng.lng);
+        return;
       }
-    };
 
-    const Manager = {
-      exportar() {
-        const d = { cli: DB.get('cli'), pro: DB.get('pro'), mov: DB.get('mov') };
-        const json = JSON.stringify(d, null, 2);
-        const blob = new Blob([json], { type: 'application/json;charset=utf-8' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `IMP_MORANGOS_BACKUP_${new Date().toISOString().slice(0,10)}.json`;
-        a.click();
-      },
-      importar(input) {
-        const file = input.files[0];
-        if (!file) return;
-        const fr = new FileReader();
-        fr.onload = (e) => {
-          try {
-            const d = JSON.parse(e.target.result);
-            if (!d) throw new Error('Arquivo inválido');
-            DB.set('cli', d.cli || []);
-            DB.set('pro', d.pro || []);
-            DB.set('mov', d.mov || []);
-            alert('Backup restaurado com sucesso!');
-            location.reload();
-          } catch (err) {
-            alert('Falha ao restaurar: arquivo inválido.');
-            console.error(err);
-          }
-        };
-        fr.readAsText(file);
+      return;
+    }
+
+    const metersPerSecond = speed * 8.0;
+    const stepMeters = metersPerSecond * dt;
+    const ratio = clamp(stepMeters / (dist || 1), 0, 1);
+
+    d.lat = cur.lat + (tgt.lat - cur.lat) * ratio;
+    d.lng = cur.lng + (tgt.lng - cur.lng) * ratio;
+    d.flyInT = clamp((d.flyInT ?? 1) + dt / 1.2, 0, 1);
+
+    updateDroneTrail(d);
+    updateDroneRouteLine(d);
+  });
+
+  renderUavOverlay();
+}
+
+/* ========= render overlay ========= */
+function renderUavOverlay(force=false){
+  if (state.droneModels.length === 0) return;
+  state.droneModels.forEach(d => {
+    if (!d.uavEl) return;
+
+    const p = latLngToPixel(d.lat, d.lng);
+    const t = d.flyInT ?? 1;
+    const x = d.flySpawn ? (d.flySpawn.x + (p.x - d.flySpawn.x) * t) : p.x;
+    const y = d.flySpawn ? (d.flySpawn.y + (p.y - d.flySpawn.y) * t) : p.y;
+
+    d.uavEl.style.left = `${x}px`;
+    d.uavEl.style.top  = `${y}px`;
+    setUavMode(d.uavEl, d.mode);
+
+    const bob = Math.sin((performance.now()/250) + d.id) * 2.6;
+    d.uavEl.style.transform = `translate(-50%,-50%) translateY(${bob}px)`;
+    d.uavEl.style.opacity = (d.mode === "idle") ? "0.78" : "0.96";
+  });
+}
+map.on("move zoom", () => renderUavOverlay());
+
+/* ========= loop ========= */
+let intervalId = null;
+function start(){
+  if (state.running) return;
+  state.running = true;
+  state.paused = false;
+  state.t = 0;
+  state.lastFrame = performance.now();
+  setStatus("Rodando");
+  mission("Simulação iniciada.", "ok");
+  speak("Simulação iniciada.");
+
+  intervalId = setInterval(() => {
+    if (!state.running || state.paused) return;
+    const now = performance.now();
+    const dt = (now - state.lastFrame) / 1000;
+    state.lastFrame = now;
+
+    state.t += dt;
+    $("kpiTime").textContent = formatMMSS(state.t);
+
+    stepDrones(dt);
+  }, 1000 / state.tickHz);
+}
+function pause(){
+  if (!state.running) return;
+  state.paused = !state.paused;
+  setStatus(state.paused ? "Pausado" : "Rodando");
+  mission(state.paused ? "Pausado." : "Retomado.", "warn");
+  speak(state.paused ? "Pausado." : "Retomado.");
+}
+function stop(){
+  if (!state.running) { setStatus("Parado"); return; }
+  state.running = false;
+  state.paused = false;
+  if (intervalId) clearInterval(intervalId);
+  intervalId = null;
+  setStatus("Parado");
+  mission("Simulação parada.", "bad");
+  speak("Simulação parada.");
+}
+
+/* ========= navigation ========= */
+function goPreset(p, label){
+  map.setView(p.center, p.zoom);
+  setSbMap(label);
+  mission(`Escala: ${label} (zoom ${p.zoom}).`, "info");
+}
+function goCity(key){
+  const c = SUL_MINAS[key] || SUL_MINAS.PA;
+  map.setView([c.lat, c.lng], c.zoom);
+  setSbMap(c.name);
+  mission(`Foco: ${c.name}.`, "ok");
+  speak(`Indo para ${c.name}.`);
+}
+
+/* ========= UI bindings ========= */
+$("btnGlobal").onclick = () => goPreset(VIEW_PRESETS.GLOBAL, "Global");
+$("btnContinental").onclick = () => goPreset(VIEW_PRESETS.CONTINENTAL, "Continental");
+$("btnRegional").onclick = () => goPreset(VIEW_PRESETS.REGIONAL, "Regional");
+
+$("btnGoCity").onclick = () => goCity($("selSulMinas").value);
+
+$("btnLocate").onclick = () => {
+  if (!navigator.geolocation){ mission("Geolocalização não suportada.", "bad"); speak("Geolocalização não suportada."); return; }
+  navigator.geolocation.getCurrentPosition(
+    (pos) => { map.setView([pos.coords.latitude, pos.coords.longitude], 16); setSbMap("Minha localização"); mission("Indo para sua localização.", "ok"); speak("Indo para sua localização."); },
+    (err) => { mission("Falha ao obter localização: " + err.message, "bad"); speak("Falha ao obter localização."); },
+    { enableHighAccuracy:true, timeout:8000, maximumAge:0 }
+  );
+};
+
+$("btnStart").onclick = start;
+$("btnPause").onclick = pause;
+$("btnStop").onclick = stop;
+
+$("btnLaunch").onclick = () => { launchDrones(); if (!state.running) start(); };
+$("btnRecall").onclick = recallDrones;
+
+$("btnFindStreet").onclick = findStreet;
+$("btnAddWaypoint").onclick = addWaypointFromSearch;
+
+$("btnSendRoute").onclick = sendRouteToSelectedDrone;
+$("btnSendToSearched").onclick = sendDroneToSearched;
+$("btnAddAndSend").onclick = addAndSendRoute;
+
+$("btnClearWaypoints").onclick = clearWaypoints;
+$("btnClearTrails").onclick = clearTrails;
+
+$("btnMapSat").onclick = () => setBaseLayer("sat");
+$("btnMapNormal").onclick = () => setBaseLayer("normal");
+
+$("btnClearMissions").onclick = () => { $("missionList").textContent=""; mission("Histórico limpo.", "info"); };
+
+/* ========= Keyboard shortcuts ========= */
+document.addEventListener("keydown", (e) => {
+  const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
+  const typing = tag === "input" || tag === "textarea" || tag === "select";
+  if (typing && e.key !== "Escape") return;
+
+  const k = e.key;
+  if (k === "Escape"){ stop(); return; }
+  if (k === " "){ e.preventDefault(); pause(); return; }
+
+  const key = k.toLowerCase();
+  if (key === "l"){ launchDrones(); if(!state.running) start(); return; }
+  if (key === "r"){ recallDrones(); return; }
+  if (key === "f"){ findStreet(); return; }
+  if (key === "a"){ addWaypointFromSearch(); return; }
+  if (key === "s"){ sendRouteToSelectedDrone(); return; }
+
+  if (key === "1"){ goPreset(VIEW_PRESETS.GLOBAL, "Global"); return; }
+  if (key === "2"){ goPreset(VIEW_PRESETS.CONTINENTAL, "Continental"); return; }
+  if (key === "3"){ goPreset(VIEW_PRESETS.REGIONAL, "Regional"); return; }
+});
+
+/* ========= Voice: cities + zoom + search + send ========= */
+const CITY_VOICE_MAP = [
+  { key:"PA", names:["pouso alegre"] },
+  { key:"BR", names:["bom repouso"] },
+  { key:"CG", names:["congonhal"] },
+  { key:"IT", names:["itajuba","itajubá"] },
+  { key:"SM", names:["santa rita do sapucai","santa rita do sapucaí","santa rita"] },
+  { key:"VA", names:["varginha"] },
+  { key:"PO", names:["pocos de caldas","poços de caldas","pocos"] },
+  { key:"AI", names:["aiuruoca"] },
+  { key:"CA", names:["cambui","cambuí"] },
+  { key:"CR", names:["caxambu"] },
+  { key:"SL", names:["sao lourenco","são lourenço","lourenco","lourenço"] },
+];
+function tryGoCityByVoice(textNorm){
+  for (const c of CITY_VOICE_MAP){
+    for (const nm of c.names){
+      if (textNorm.includes(nm)){
+        goCity(c.key);
+        return true;
       }
-    };
+    }
+  }
+  return false;
+}
 
-    const Relatorio = {
-      gerar() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        const movs = DB.get('mov') || [];
-        doc.text("RELATÓRIO IMPÉRIO MORANGOS", 14, 15);
-        doc.autoTable({
-          startY: 25,
-          head: [['Data', 'Cliente', 'Valor', 'Status', 'Motivo']],
-          body: movs.map(m => [new Date(m.data).toLocaleDateString(), m.cli, formatBR(m.val), m.status, m.motivo || ''])
-        });
-        doc.save("Relatorio.pdf");
-      }
-    };
+function parseZoomSteps(text){
+  const m = (text || "").match(/(\d{1,2})/);
+  if (!m) return 1;
+  const n = parseInt(m[1], 10);
+  if (!Number.isFinite(n)) return 1;
+  return clamp(n, 1, 6);
+}
+function parseZoomLevel(text){
+  const m = (text || "").match(/(nivel|nível|zoom)\s*(?:para|em|no)?\s*(\d{1,2})/);
+  if (!m) return null;
+  const n = parseInt(m[2], 10);
+  if (!Number.isFinite(n)) return null;
+  return clamp(n, 2, 19);
+}
+function isZoomInIntent(t){
+  return /(zoom\s*(in|mais|\+)|aproxima|aproximar|aumenta(r)?\s*(o\s*)?zoom|dar\s*zoom|mais\s*perto)/.test(t);
+}
+function isZoomOutIntent(t){
+  return /(zoom\s*(out|menos|-)|afasta|afastar|reduz(ir)?\s*(o\s*)?zoom|menos\s*perto|volta\s*(o\s*)?zoom)/.test(t);
+}
+function isResetZoomIntent(t){
+  return /(reset(ar)?\s*zoom|tirar\s*zoom|remover\s*zoom|zoom\s*padrao|zoom\s*padrão|voltar\s*(ao\s*)?zoom\s*(padrao|padrão)|voltar\s*(ao\s*)?normal)/.test(t);
+}
+function zoomIn(steps=1){
+  steps = clamp(parseInt(steps || 1, 10), 1, 6);
+  map.setZoom(map.getZoom() + steps);
+  mission(`Zoom +${steps} (voz).`, "info");
+}
+function zoomOut(steps=1){
+  steps = clamp(parseInt(steps || 1, 10), 1, 6);
+  map.setZoom(map.getZoom() - steps);
+  mission(`Zoom -${steps} (voz).`, "info");
+}
+function resetZoom(){
+  goPreset(VIEW_PRESETS.REGIONAL, "Regional");
+  mission("Zoom resetado (Regional).", "ok");
+}
 
-    document.addEventListener('DOMContentLoaded', () => App.init());
-  </script>
+function extractAddressFromVoice(textNorm){
+  const patterns = [
+    "buscar endereco ",
+    "buscar endereço ",
+    "pesquisar endereco ",
+    "pesquisar endereço ",
+    "procurar endereco ",
+    "procurar endereço ",
+    "encontrar endereco ",
+    "encontrar endereço ",
+    "buscar rua ",
+    "pesquisar rua ",
+    "procurar rua ",
+    "endereco ",
+    "endereço ",
+    "pesquisar "
+  ];
+  for (const p of patterns){
+    if (textNorm.startsWith(p)){
+      const addr = textNorm.slice(p.length).trim();
+      return addr.length >= 4 ? addr : "";
+    }
+  }
+  const m = textNorm.match(/^(buscar|pesquisar|procurar|encontrar)\s*[:\-]\s*(.+)$/);
+  if (m && m[2]) return m[2].trim();
+  return "";
+}
+async function voiceSearchAddress(addr){
+  if (!addr){
+    mission("Voz: nenhum endereço detectado.", "warn");
+    speak("Não entendi o endereço.");
+    return;
+  }
+  $("inpStreet").value = addr;
+  mission(`Voz: pesquisando endereço -> "${addr}"`, "info");
+  speak("Pesquisando endereço.");
+  await findStreet();
+}
+
+function parseDroneNumber(textNorm){
+  const m = textNorm.match(/drone\s*(numero|número)?\s*(\d{1,2})/);
+  if (!m) return null;
+  const n = parseInt(m[2], 10);
+  if (!Number.isFinite(n)) return null;
+  return clamp(n, 1, 30);
+}
+function extractSendAddressFromVoice(textNorm){
+  const m = textNorm.match(/^(enviar|manda(r)?|despachar)\s+drone(?:\s*(?:numero|número)?\s*\d{1,2})?\s+(?:para|pro)\s+(.+)$/);
+  if (m && m[3]) return m[3].trim();
+  return "";
+}
+async function voiceSendDroneToAddress(addr, droneNumber=null){
+  if (!addr){
+    mission("Voz: endereço vazio.", "warn");
+    speak("Não entendi o endereço.");
+    return;
+  }
+  if (state.droneModels.length === 0){
+    mission("Lance drones antes de enviar.", "warn");
+    speak("Lance drones antes de enviar.");
+    return;
+  }
+  try{
+    $("inpStreet").value = addr;
+    mission(`Voz: buscando destino -> "${addr}"`, "info");
+    speak("Buscando destino.");
+    const r = await geocodeStreet(addr);
+    if (!r){
+      mission("Destino não encontrado.", "warn");
+      speak("Destino não encontrado.");
+      return;
+    }
+    lastGeocodeResult = r;
+    setSbDest(r.label);
+    map.setView(r.latlng, Math.max(map.getZoom(), 16));
+    if (!tempSearchMarker){
+      tempSearchMarker = L.marker(r.latlng, { title:"Resultado da busca" }).addTo(map);
+    } else {
+      tempSearchMarker.setLatLng(r.latlng);
+    }
+
+    let drone = null;
+    if (droneNumber) drone = state.droneModels.find(d => d.id === droneNumber) || null;
+    if (!drone) drone = getSelectedDrone() || state.droneModels[0];
+    // atualiza select também
+    $("selDroneId").value = String(drone.id);
+    setSbDrone(`Drone ${drone.id}`);
+
+    sendDroneToLatLng(drone, r.latlng, r.label);
+  }catch(e){
+    mission("Erro ao enviar por voz: " + e.message, "bad");
+    speak("Erro ao enviar o drone.");
+  }
+}
+
+/* ========= Voice recognition ========= */
+let recognition = null;
+let voiceOn = false;
+function setVoiceUI(on){
+  voiceOn = on;
+  $("voiceDot").classList.toggle("on", on);
+  $("voiceLabel").textContent = on ? "Voz: ligada" : "Voz: desligada";
+  $("btnVoice").textContent = on ? "Desativar comandos de voz" : "Ativar comandos de voz";
+}
+function ensureRecognition(){
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) return null;
+  const rec = new SpeechRecognition();
+  rec.continuous = true;
+  rec.interimResults = false;
+  rec.maxAlternatives = 1;
+  return rec;
+}
+
+function runVoice(cmdRaw){
+  const c = normalizeCmd(cmdRaw);
+
+  // enviar drone para endereço (com ou sem número)
+  if (c.startsWith("enviar drone") || c.startsWith("mandar drone") || c.startsWith("manda drone") || c.startsWith("despachar drone")){
+    const dn = parseDroneNumber(c);
+    const addr = extractSendAddressFromVoice(c);
+    if (addr){
+      voiceSendDroneToAddress(addr, dn);
+      return;
+    }
+  }
+
+  // pesquisar endereço por voz
+  const addrSearch = extractAddressFromVoice(c);
+  if (addrSearch){
+    voiceSearchAddress(addrSearch);
+    return;
+  }
+
+  // zoom nível X
+  const zl = parseZoomLevel(c);
+  if (zl !== null){
+    map.setZoom(zl);
+    mission(`Zoom nível ${zl} (voz).`, "info");
+    speak(`Zoom nível ${zl}.`);
+    return;
+  }
+
+  // zoom +/-
+  if (isResetZoomIntent(c)){ resetZoom(); speak("Zoom resetado."); return; }
+  if (isZoomInIntent(c)){ const s = parseZoomSteps(c); zoomIn(s); speak(`Aproximando ${s}.`); return; }
+  if (isZoomOutIntent(c)){ const s = parseZoomSteps(c); zoomOut(s); speak(`Afastando ${s}.`); return; }
+
+  // presets
+  if (c === "global" || c.includes("vista global")){ goPreset(VIEW_PRESETS.GLOBAL, "Global"); speak("Vista global."); return; }
+  if (c === "continental" || c.includes("vista continental")){ goPreset(VIEW_PRESETS.CONTINENTAL, "Continental"); speak("Vista continental."); return; }
+  if (c === "regional" || c.includes("vista regional")){ goPreset(VIEW_PRESETS.REGIONAL, "Regional"); speak("Vista regional."); return; }
+
+  // camadas
+  if (c.includes("satelite") || c.includes("satélite")){ setBaseLayer("sat"); speak("Satélite ativado."); return; }
+  if (c.includes("mapa normal") || c.includes("mapa padrao") || c.includes("mapa padrão") || c === "normal"){ setBaseLayer("normal"); speak("Mapa normal."); return; }
+
+  // simulação
+  if (c === "iniciar" || c === "start"){ start(); return; }
+  if (c === "pausar" || c === "pause"){ pause(); return; }
+  if (c === "parar" || c === "stop"){ stop(); return; }
+
+  if (c.includes("lancar drones") || c.includes("lançar drones") || c.includes("launch drones")){
+    launchDrones(); if(!state.running) start(); return;
+  }
+  if (c.includes("retornar drones") || c.includes("voltar drones") || c.includes("recolher drones")){
+    recallDrones(); return;
+  }
+
+  // rota/waypoints
+  if (c.includes("adicionar waypoint") || c.includes("adicionar destino") || c.includes("adicionar ponto")){ addWaypointFromSearch(); return; }
+  if (c.includes("enviar rota") || c.includes("iniciar rota") || c.includes("executar rota")){ sendRouteToSelectedDrone(); return; }
+  if (c.includes("limpar waypoints") || c.includes("remover waypoints") || c.includes("apagar waypoints")){ clearWaypoints(); return; }
+  if (c.includes("limpar trilhas") || c.includes("apagar trilhas") || c.includes("remover trilhas")){ clearTrails(); return; }
+  if (c.includes("enviar ao pesquisado") || c.includes("enviar para o pesquisado") || c.includes("enviar drone ao pesquisado")){
+    sendDroneToSearched();
+    return;
+  }
+
+  // street view manual
+  if (c.includes("abrir street view") || c === "street view"){
+    if (lastGeocodeResult){
+      openStreetViewModal(lastGeocodeResult.latlng.lat, lastGeocodeResult.latlng.lng);
+      speak("Abrindo street view.");
+      return;
+    }
+    speak("Sem endereço selecionado.");
+    return;
+  }
+
+  // cidades (todas)
+  if (tryGoCityByVoice(c)) return;
+
+  mission(`Voz: comando não reconhecido -> "${cmdRaw}"`, "warn");
+}
+
+$("btnVoice").onclick = () => {
+  if (!recognition){
+    recognition = ensureRecognition();
+    if (!recognition){
+      mission("Web Speech API não disponível.", "bad");
+      speak("Comandos de voz indisponíveis.");
+      return;
+    }
+    recognition.onresult = (e) => {
+      const last = e.results[e.results.length - 1];
+      const text = last[0].transcript;
+      mission(`Voz -> "${text}"`, "info");
+      runVoice(text);
+    };
+    recognition.onerror = (e) => mission("Voz erro: " + (e.error || "desconhecido"), "bad");
+    recognition.onend = () => { if (voiceOn){ try{recognition.start();}catch{}} };
+  }
+
+  recognition.lang = $("selLang").value || "pt-BR";
+  if (!voiceOn){
+    try{ recognition.start(); setVoiceUI(true); mission("Comandos de voz ativados.", "ok"); speak("Comandos de voz ativados."); }
+    catch(e){ mission("Não foi possível iniciar voz: " + e.message, "bad"); }
+  } else {
+    try{ recognition.stop(); setVoiceUI(false); mission("Comandos de voz desativados.", "warn"); }
+    catch(e){ mission("Não foi possível parar voz: " + e.message, "bad"); }
+  }
+};
+
+/* ========= boot ========= */
+function boot(){
+  $("kpiTime").textContent = "00:00";
+  $("kpiDrones").textContent = "0";
+  $("kpiPerimeter").textContent = "—";
+  setStatus("Parado");
+  setVoiceUI(false);
+  setSbMap("Normal");
+  setSbDest("—");
+  setSbDrone("—");
+  refreshDroneSelect();
+  refreshWaypointsUI();
+  mission("Pronto. Shift+Clique adiciona waypoint. Voz: 'buscar endereço ...' e 'enviar drone para ...'.", "info");
+}
+boot();
+</script>
 </body>
 </html>
