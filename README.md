@@ -45,3 +45,18 @@ URL final: `https://<usuario>.github.io`
 
 - Abra `erp-completo.html` para usar o sistema completo em formato single-file.
 - Fluxo recomendado: cadastre empresa/admin em **Auth**, faça login e use os módulos pelo menu lateral.
+
+
+## Servidor virtual no GitHub (persistência remota)
+
+No arquivo `erp-completo.html` existe o módulo **Servidor GitHub** para salvar todos os dados do sistema em um repositório GitHub (arquivo JSON remoto).
+
+Fluxo:
+1. Preencha `owner`, `repo`, `branch`, `path` e `token` (escopo `repo`).
+2. Clique em **Salvar configuração cloud**.
+3. Clique em **Enviar dados para GitHub** para persistir todo o banco (incluindo empresas, personalizações e login/senha).
+4. Use **Carregar dados do GitHub** para restaurar os dados remotos no sistema.
+
+## Personalização por empresa
+
+No módulo **Personalização** do `erp-completo.html`, cada empresa salva identidade própria: nome, CNPJ, telefone, endereço, tema, cor primária, logo e slogan.

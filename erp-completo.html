@@ -183,9 +183,31 @@
       <h2 style="margin-top:0">10) Configurações do sistema</h2>
       <div class="grid-4">
         <div><label>Nome empresa</label><input id="s_nome"/></div><div><label>CNPJ</label><input id="s_cnpj"/></div><div><label>Telefone</label><input id="s_tel"/></div><div><label>Endereço</label><input id="s_end"/></div>
-        <div><label>Tema</label><select id="s_tema"><option>Escuro</option><option>Claro</option></select></div><div><label>Cor primária</label><input id="s_cor" value="#4f8cff"/></div>
+        <div><label>Tema</label><select id="s_tema"><option>Escuro</option><option>Claro</option></select></div><div><label>Cor primária</label><input id="s_cor" value="#4f8cff"/></div><div><label>Logo URL</label><input id="s_logo"/></div><div><label>Slogan</label><input id="s_slogan"/></div>
       </div>
       <div class="actions"><button class="btn ok" id="btnSalvarCfg">Salvar configurações</button></div>
+      <p class="muted">Personalização aplicada por empresa (tenant): tema, cor e identidade visual.</p>
+    </section>
+
+    <section id="cloud" class="section">
+      <h2 style="margin-top:0">11) Servidor virtual GitHub (persistência remota)</h2>
+      <p class="muted">Use um repositório GitHub como armazenamento JSON central do sistema. O token é usado apenas no seu navegador.</p>
+      <div class="grid-4">
+        <div><label>Owner</label><input id="g_owner" placeholder="seu-usuario"/></div>
+        <div><label>Repositório</label><input id="g_repo" placeholder="drsolucoes-dados"/></div>
+        <div><label>Branch</label><input id="g_branch" value="main"/></div>
+        <div><label>Caminho do arquivo</label><input id="g_path" value="data/erp-db.json"/></div>
+      </div>
+      <div class="grid">
+        <div><label>GitHub Token (repo)</label><input id="g_token" type="password" placeholder="ghp_..."/></div>
+        <div><label>Último status</label><input id="g_status" disabled/></div>
+      </div>
+      <div class="actions">
+        <button class="btn ok" id="btnSaveCloudCfg">Salvar configuração cloud</button>
+        <button class="btn pri" id="btnPushGithub">Enviar dados para GitHub</button>
+        <button class="btn warn" id="btnPullGithub">Carregar dados do GitHub</button>
+      </div>
+      <p class="muted">Ao enviar, todos os logins/senhas e dados das empresas serão gravados no JSON remoto do GitHub.</p>
     </section>
 
     <section id="api" class="section">
@@ -206,7 +228,7 @@ const money=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'B
 const today=()=>new Date().toISOString().slice(0,10);
 const month=()=>new Date().toISOString().slice(0,7);
 
-const defaultDb={tenants:[],users:[],products:[],customers:[],sales:[],stockMovements:[],finance:[],cash:[],settings:[],audit:[]};
+const defaultDb={tenants:[],users:[],products:[],customers:[],sales:[],stockMovements:[],finance:[],cash:[],settings:[],audit:[],cloud:{owner:'',repo:'',branch:'main',path:'data/erp-db.json',token:''}};
 let db=load(DB_KEY,defaultDb); let session=load(SESSION_KEY,null); let cart=[];
 function load(k,f){try{return JSON.parse(localStorage.getItem(k))??f}catch{return f}}
 function save(){localStorage.setItem(DB_KEY,JSON.stringify(db)); localStorage.setItem(SESSION_KEY,JSON.stringify(session)); renderAll();}
@@ -215,7 +237,7 @@ function tenantFilter(list){return list.filter(i=>i.tenantId===session?.tenantId
 function audit(action,entity,meta={}){db.audit.push({id:Date.now()+Math.random(),tenantId:session?.tenantId||null,action,entity,meta,at:new Date().toISOString()})}
 
 const menuItems=[
- ['auth','Auth'],['dashboard','Dashboard'],['produtos','Produtos'],['clientes','Clientes'],['pdv','PDV'],['estoque','Estoque'],['financeiro','Financeiro'],['caixa','Caixa'],['relatorios','Relatórios'],['config','Configurações'],['api','API']
+ ['auth','Auth'],['dashboard','Dashboard'],['produtos','Produtos'],['clientes','Clientes'],['pdv','PDV'],['estoque','Estoque'],['financeiro','Financeiro'],['caixa','Caixa'],['relatorios','Relatórios'],['config','Personalização'],['cloud','Servidor GitHub'],['api','API']
 ];
 $('menu').innerHTML=menuItems.map(([id,name],i)=>`<button data-sec="${id}" class="${i===0?'active':''}">${name}</button>`).join('');
 $('menu').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>showSection(b.dataset.sec)));
@@ -265,7 +287,55 @@ $('btnSangria').onclick=()=>{if(!requireLogin())return;const c=openCash();if(!c)
 $('btnFecharCx').onclick=()=>{if(!requireLogin())return;const c=openCash();if(!c)return alert('Sem caixa aberto');c.closeAt=new Date().toISOString();c.close=Number($('cx_close').value||0);c.status='FECHADO';audit('CLOSE','cash',{close:c.close});save();};
 
 // Config
-$('btnSalvarCfg').onclick=()=>{if(!requireLogin())return;let s=db.settings.find(x=>x.tenantId===session.tenantId);if(!s){s={tenantId:session.tenantId};db.settings.push(s)}Object.assign(s,{name:$('s_nome').value,cnpj:$('s_cnpj').value,phone:$('s_tel').value,address:$('s_end').value,theme:$('s_tema').value,color:$('s_cor').value});document.documentElement.style.setProperty('--pri',s.color||'#4f8cff');audit('UPDATE','settings',{});save();};
+$('btnSalvarCfg').onclick=()=>{if(!requireLogin())return;let s=db.settings.find(x=>x.tenantId===session.tenantId);if(!s){s={tenantId:session.tenantId};db.settings.push(s)}Object.assign(s,{name:$('s_nome').value,cnpj:$('s_cnpj').value,phone:$('s_tel').value,address:$('s_end').value,theme:$('s_tema').value,color:$('s_cor').value,logo:$('s_logo').value,slogan:$('s_slogan').value});document.documentElement.style.setProperty('--pri',s.color||'#4f8cff');audit('UPDATE','settings',{});save();};
+
+$('btnSaveCloudCfg').onclick=()=>{
+  db.cloud={owner:$('g_owner').value.trim(),repo:$('g_repo').value.trim(),branch:$('g_branch').value.trim()||'main',path:$('g_path').value.trim()||'data/erp-db.json',token:$('g_token').value.trim()};
+  $('g_status').value='Configuração cloud salva localmente.';
+  save();
+};
+
+async function githubRequest(url, opts={}){
+  const token=db.cloud?.token;
+  if(!token) throw new Error('Informe GitHub Token na aba Servidor GitHub.');
+  const headers={Accept:'application/vnd.github+json',Authorization:`Bearer ${token}`,...(opts.headers||{})};
+  const res=await fetch(url,{...opts,headers});
+  if(!res.ok) throw new Error(`GitHub ${res.status}: ${await res.text()}`);
+  return res.status===204?{}:await res.json();
+}
+
+async function getRemoteFileSha(){
+  const {owner,repo,path,branch}=db.cloud;
+  const url=`https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${encodeURIComponent(branch)}`;
+  try{const data=await githubRequest(url); return data.sha||null;}catch(e){if(String(e.message).includes('404')) return null; throw e;}
+}
+
+$('btnPushGithub').onclick=async()=>{
+  try{
+    if(!db.cloud?.owner||!db.cloud?.repo) throw new Error('Preencha owner/repo.');
+    const {owner,repo,path,branch}=db.cloud;
+    const sha=await getRemoteFileSha();
+    const content=btoa(unescape(encodeURIComponent(JSON.stringify(db,null,2))));
+    const body={message:'chore: sync erp data',content,branch,...(sha?{sha}:{})};
+    const url=`https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+    await githubRequest(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    $('g_status').value='Dados enviados com sucesso para GitHub.';
+  }catch(err){$('g_status').value='Erro push: '+err.message;}
+};
+
+$('btnPullGithub').onclick=async()=>{
+  try{
+    if(!db.cloud?.owner||!db.cloud?.repo) throw new Error('Preencha owner/repo.');
+    const {owner,repo,path,branch}=db.cloud;
+    const url=`https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${encodeURIComponent(branch)}`;
+    const data=await githubRequest(url);
+    const json=JSON.parse(decodeURIComponent(escape(atob(data.content.replace(/\n/g,'')))));
+    db=json;
+    if(!db.cloud) db.cloud={owner:'',repo:'',branch:'main',path:'data/erp-db.json',token:''};
+    $('g_status').value='Dados carregados do GitHub com sucesso.';
+    save();
+  }catch(err){$('g_status').value='Erro pull: '+err.message;}
+};
 
 // Relatórios/backup
 function download(name,text,type='text/plain'){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();}
@@ -305,7 +375,8 @@ function renderAll(){
   const receitas=fin.filter(f=>f.tipo==='RECEBER').reduce((a,b)=>a+b.valor,0)+sal.reduce((a,b)=>a+b.total,0); const despesas=fin.filter(f=>f.tipo==='PAGAR').reduce((a,b)=>a+b.valor,0); const lucro=receitas-despesas;
   $('tbRep').innerHTML=`<tr><th>Receitas</th><td>${money(receitas)}</td></tr><tr><th>Despesas</th><td>${money(despesas)}</td></tr><tr><th>Lucro líquido</th><td>${money(lucro)}</td></tr><tr><th>Produtos mais vendidos</th><td>${$('topProducts').textContent}</td></tr><tr><th>Movimentos estoque</th><td>${mov.length}</td></tr><tr><th>Logs auditoria</th><td>${tenantFilter(db.audit).length}</td></tr>`;
 
-  const cfg=db.settings.find(s=>s.tenantId===session?.tenantId); if(cfg){$('s_nome').value=cfg.name||'';$('s_cnpj').value=cfg.cnpj||'';$('s_tel').value=cfg.phone||'';$('s_end').value=cfg.address||'';$('s_tema').value=cfg.theme||'Escuro';$('s_cor').value=cfg.color||'#4f8cff';document.documentElement.style.setProperty('--pri',cfg.color||'#4f8cff');}
+  const cfg=db.settings.find(s=>s.tenantId===session?.tenantId); if(cfg){$('s_nome').value=cfg.name||'';$('s_cnpj').value=cfg.cnpj||'';$('s_tel').value=cfg.phone||'';$('s_end').value=cfg.address||'';$('s_tema').value=cfg.theme||'Escuro';$('s_cor').value=cfg.color||'#4f8cff';$('s_logo').value=cfg.logo||'';$('s_slogan').value=cfg.slogan||'';document.documentElement.style.setProperty('--pri',cfg.color||'#4f8cff');}
+  if(db.cloud){$('g_owner').value=db.cloud.owner||'';$('g_repo').value=db.cloud.repo||'';$('g_branch').value=db.cloud.branch||'main';$('g_path').value=db.cloud.path||'data/erp-db.json';$('g_token').value=db.cloud.token||'';}
   renderCart();
 }
 
