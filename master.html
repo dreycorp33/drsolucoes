@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Painel de controle do usuário master - DR Soluções ERP." />
+  <title>Controle Master | DR Soluções</title>
+  <style>
+    :root {
+      --bg: #0d1324;
+      --panel: #141d35;
+      --panel-2: #1a2848;
+      --text: #e9efff;
+      --muted: #9fb2dd;
+      --primary: #4f8cff;
+      --success: #20c997;
+      --warning: #ffb454;
+      --danger: #ff5e73;
+      --border: #27375f;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Inter, Segoe UI, Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); }
+    .container { width: min(1120px, 92vw); margin: 0 auto; }
+
+    header { border-bottom: 1px solid #1f2b46; background: rgba(13, 19, 36, 0.95); }
+    .top { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; }
+    .brand { font-weight: 800; }
+    .muted { color: var(--muted); }
+
+    .layout { display: grid; grid-template-columns: 260px 1fr; gap: 16px; padding: 18px 0 30px; }
+    .panel { background: linear-gradient(160deg, var(--panel), var(--panel-2)); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+
+    .menu { display: grid; gap: 8px; }
+    .menu button {
+      width: 100%; text-align: left; padding: 10px 12px; border: 1px solid #314471; border-radius: 10px;
+      background: #101a31; color: var(--text); cursor: pointer;
+    }
+    .menu button.active, .menu button:hover { background: #17274a; border-color: #4d6cb1; }
+
+    .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
+    .kpi { background: #101a31; border: 1px solid #273a66; border-radius: 10px; padding: 12px; }
+    .kpi strong { display: block; font-size: 1.15rem; margin-bottom: 6px; }
+    .kpi span { color: var(--muted); font-size: .85rem; }
+
+    .section { display: none; }
+    .section.active { display: block; }
+
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    label { display: block; font-size: .86rem; color: var(--muted); margin-bottom: 4px; }
+    input, select {
+      width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #344878;
+      background: #0f1830; color: var(--text);
+    }
+    .actions { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+    .btn { border: 0; border-radius: 10px; padding: 10px 14px; font-weight: 700; cursor: pointer; }
+    .btn.primary { background: var(--primary); color: #fff; }
+    .btn.success { background: var(--success); color: #fff; }
+    .btn.warning { background: var(--warning); color: #121212; }
+    .btn.danger { background: var(--danger); color: #fff; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    th, td { text-align: left; padding: 9px; border-bottom: 1px solid #2a3b66; font-size: .9rem; }
+    th { color: #c6d6ff; }
+
+    .login-overlay {
+      position: fixed; inset: 0; background: rgba(3, 8, 18, 0.85);
+      display: grid; place-items: center;
+    }
+    .login-box { width: min(420px, 92vw); }
+
+    @media (max-width: 940px) {
+      .layout { grid-template-columns: 1fr; }
+      .kpis { grid-template-columns: 1fr 1fr; }
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container top">
+      <div>
+        <div class="brand">DR Soluções • Controle Master</div>
+        <small class="muted">Painel administrativo do usuário master</small>
+      </div>
+      <div>
+        <a href="index.html" class="muted">← Voltar ao site</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container layout">
+    <aside class="panel">
+      <h3 style="margin-top:0">Navegação</h3>
+      <div class="menu">
+        <button data-target="visao" class="active">📊 Visão Geral</button>
+        <button data-target="usuarios">👤 Usuários</button>
+        <button data-target="empresas">🏢 Empresas</button>
+        <button data-target="planos">💳 Planos e Billing</button>
+        <button data-target="seguranca">🔒 Segurança</button>
+      </div>
+    </aside>
+
+    <section class="panel">
+      <div id="visao" class="section active">
+        <h2 style="margin-top:0">Visão Geral da Plataforma</h2>
+        <div class="kpis">
+          <div class="kpi"><strong id="kpiEmpresas">0</strong><span>Empresas ativas</span></div>
+          <div class="kpi"><strong id="kpiUsuarios">0</strong><span>Usuários totais</span></div>
+          <div class="kpi"><strong id="kpiFaturamento">R$ 0,00</strong><span>MRR estimado</span></div>
+          <div class="kpi"><strong id="kpiUptime">99.9%</strong><span>Uptime referência</span></div>
+        </div>
+        <p class="muted">Este painel é uma base inicial para controle de ambiente master. Os dados são salvos em localStorage para demonstração.</p>
+      </div>
+
+      <div id="usuarios" class="section">
+        <h2 style="margin-top:0">Gerenciar Usuários</h2>
+        <div class="grid">
+          <div><label>Nome</label><input id="u_nome" placeholder="Ex: Ana Silva" /></div>
+          <div><label>E-mail</label><input id="u_email" placeholder="ana@empresa.com" /></div>
+          <div><label>Perfil</label>
+            <select id="u_perfil">
+              <option>Administrador</option>
+              <option>Gerente</option>
+              <option>Operador de caixa</option>
+              <option>Financeiro</option>
+            </select>
+          </div>
+          <div><label>Status</label>
+            <select id="u_status"><option>Ativo</option><option>Inativo</option></select>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn primary" id="btnSalvarUsuario">Salvar usuário</button>
+          <button class="btn danger" id="btnLimparUsuarios">Limpar lista</button>
+        </div>
+        <table>
+          <thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Status</th></tr></thead>
+          <tbody id="tbUsuarios"></tbody>
+        </table>
+      </div>
+
+      <div id="empresas" class="section">
+        <h2 style="margin-top:0">Cadastro de Empresas (Tenants)</h2>
+        <div class="grid">
+          <div><label>Nome da empresa</label><input id="e_nome" placeholder="Ex: Loja Centro" /></div>
+          <div><label>CNPJ</label><input id="e_cnpj" placeholder="00.000.000/0001-00" /></div>
+          <div><label>Plano</label>
+            <select id="e_plano"><option>Starter</option><option>Pro</option><option>Enterprise</option></select>
+          </div>
+          <div><label>Status</label>
+            <select id="e_status"><option>Ativa</option><option>Suspensa</option></select>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn success" id="btnSalvarEmpresa">Salvar empresa</button>
+          <button class="btn danger" id="btnLimparEmpresas">Limpar lista</button>
+        </div>
+        <table>
+          <thead><tr><th>Empresa</th><th>CNPJ</th><th>Plano</th><th>Status</th></tr></thead>
+          <tbody id="tbEmpresas"></tbody>
+        </table>
+      </div>
+
+      <div id="planos" class="section">
+        <h2 style="margin-top:0">Billing e Planos</h2>
+        <p class="muted">Configurações rápidas de ticket médio mensal por plano.</p>
+        <div class="grid">
+          <div><label>Starter (R$)</label><input id="p_starter" type="number" min="0" step="0.01" value="149" /></div>
+          <div><label>Pro (R$)</label><input id="p_pro" type="number" min="0" step="0.01" value="299" /></div>
+          <div><label>Enterprise (R$)</label><input id="p_enterprise" type="number" min="0" step="0.01" value="799" /></div>
+        </div>
+        <div class="actions">
+          <button class="btn warning" id="btnSalvarPlanos">Salvar configuração</button>
+        </div>
+      </div>
+
+      <div id="seguranca" class="section">
+        <h2 style="margin-top:0">Segurança Master</h2>
+        <p class="muted">Troque a senha de acesso da área master (armazenada localmente para demonstração estática).</p>
+        <div class="grid">
+          <div><label>Senha atual</label><input id="s_atual" type="password" /></div>
+          <div><label>Nova senha</label><input id="s_nova" type="password" /></div>
+        </div>
+        <div class="actions">
+          <button class="btn warning" id="btnTrocarSenha">Atualizar senha master</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="login-overlay" id="loginOverlay">
+    <div class="panel login-box">
+      <h2 style="margin-top:0">Login Master</h2>
+      <p class="muted">Acesso exclusivo ao painel de controle.</p>
+      <label>Usuário</label>
+      <input id="loginUser" value="master" />
+      <label style="margin-top:8px">Senha</label>
+      <input id="loginPass" type="password" placeholder="Digite sua senha" />
+      <div class="actions">
+        <button class="btn primary" id="btnEntrar">Entrar</button>
+      </div>
+      <small class="muted">Senha padrão inicial: <strong>master123</strong> (altere após o primeiro acesso)</small>
+    </div>
+  </div>
+
+  <script>
+    const STORE = {
+      users: 'dr_master_users',
+      companies: 'dr_master_companies',
+      plans: 'dr_master_plans',
+      pass: 'dr_master_password'
+    };
+
+    if (!localStorage.getItem(STORE.pass)) localStorage.setItem(STORE.pass, 'master123');
+
+    const getJSON = (key, fallback = []) => {
+      try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
+      catch { return fallback; }
+    };
+    const setJSON = (key, val) => localStorage.setItem(key, JSON.stringify(val));
+
+    const users = () => getJSON(STORE.users, []);
+    const companies = () => getJSON(STORE.companies, []);
+
+    function renderUsers() {
+      const rows = users().map(u => `<tr><td>${u.nome}</td><td>${u.email}</td><td>${u.perfil}</td><td>${u.status}</td></tr>`).join('');
+      document.getElementById('tbUsuarios').innerHTML = rows || '<tr><td colspan="4" class="muted">Sem usuários cadastrados</td></tr>';
+      document.getElementById('kpiUsuarios').textContent = users().length;
+    }
+
+    function renderCompanies() {
+      const rows = companies().map(e => `<tr><td>${e.nome}</td><td>${e.cnpj}</td><td>${e.plano}</td><td>${e.status}</td></tr>`).join('');
+      document.getElementById('tbEmpresas').innerHTML = rows || '<tr><td colspan="4" class="muted">Sem empresas cadastradas</td></tr>';
+      const active = companies().filter(c => c.status === 'Ativa').length;
+      document.getElementById('kpiEmpresas').textContent = active;
+      updateMrr();
+    }
+
+    function updateMrr() {
+      const planCfg = getJSON(STORE.plans, { Starter: 149, Pro: 299, Enterprise: 799 });
+      document.getElementById('p_starter').value = planCfg.Starter;
+      document.getElementById('p_pro').value = planCfg.Pro;
+      document.getElementById('p_enterprise').value = planCfg.Enterprise;
+
+      const total = companies().reduce((acc, c) => acc + Number(planCfg[c.plano] || 0), 0);
+      document.getElementById('kpiFaturamento').textContent = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    document.querySelectorAll('.menu button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.menu button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const target = btn.dataset.target;
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.getElementById(target).classList.add('active');
+      });
+    });
+
+    document.getElementById('btnSalvarUsuario').addEventListener('click', () => {
+      const nome = document.getElementById('u_nome').value.trim();
+      const email = document.getElementById('u_email').value.trim();
+      const perfil = document.getElementById('u_perfil').value;
+      const status = document.getElementById('u_status').value;
+      if (!nome || !email) return alert('Informe nome e e-mail.');
+      const data = users();
+      data.push({ nome, email, perfil, status });
+      setJSON(STORE.users, data);
+      document.getElementById('u_nome').value = '';
+      document.getElementById('u_email').value = '';
+      renderUsers();
+    });
+
+    document.getElementById('btnLimparUsuarios').addEventListener('click', () => {
+      if (!confirm('Deseja remover todos os usuários?')) return;
+      setJSON(STORE.users, []);
+      renderUsers();
+    });
+
+    document.getElementById('btnSalvarEmpresa').addEventListener('click', () => {
+      const nome = document.getElementById('e_nome').value.trim();
+      const cnpj = document.getElementById('e_cnpj').value.trim();
+      const plano = document.getElementById('e_plano').value;
+      const status = document.getElementById('e_status').value;
+      if (!nome) return alert('Informe o nome da empresa.');
+      const data = companies();
+      data.push({ nome, cnpj, plano, status });
+      setJSON(STORE.companies, data);
+      document.getElementById('e_nome').value = '';
+      document.getElementById('e_cnpj').value = '';
+      renderCompanies();
+    });
+
+    document.getElementById('btnLimparEmpresas').addEventListener('click', () => {
+      if (!confirm('Deseja remover todas as empresas?')) return;
+      setJSON(STORE.companies, []);
+      renderCompanies();
+    });
+
+    document.getElementById('btnSalvarPlanos').addEventListener('click', () => {
+      const cfg = {
+        Starter: Number(document.getElementById('p_starter').value || 0),
+        Pro: Number(document.getElementById('p_pro').value || 0),
+        Enterprise: Number(document.getElementById('p_enterprise').value || 0)
+      };
+      setJSON(STORE.plans, cfg);
+      updateMrr();
+      alert('Configuração de planos salva.');
+    });
+
+    document.getElementById('btnTrocarSenha').addEventListener('click', () => {
+      const atual = document.getElementById('s_atual').value;
+      const nova = document.getElementById('s_nova').value;
+      const saved = localStorage.getItem(STORE.pass);
+      if (atual !== saved) return alert('Senha atual inválida.');
+      if (!nova || nova.length < 6) return alert('A nova senha deve ter pelo menos 6 caracteres.');
+      localStorage.setItem(STORE.pass, nova);
+      document.getElementById('s_atual').value = '';
+      document.getElementById('s_nova').value = '';
+      alert('Senha master atualizada com sucesso.');
+    });
+
+    document.getElementById('btnEntrar').addEventListener('click', () => {
+      const u = document.getElementById('loginUser').value.trim();
+      const p = document.getElementById('loginPass').value;
+      const saved = localStorage.getItem(STORE.pass);
+      if (u !== 'master' || p !== saved) return alert('Credenciais inválidas.');
+      document.getElementById('loginOverlay').style.display = 'none';
+      renderUsers();
+      renderCompanies();
+      updateMrr();
+    });
+  </script>
+</body>
+</html>
