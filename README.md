@@ -1,29 +1,62 @@
-# Império Morangos - Site para GitHub Pages
+# DR Soluções — Simulador + Servidor de Dados
 
-Esta é a versão estática (front-end) da aplicação "Império Morangos" preparada para publicar com GitHub Pages.
+Este repositório agora possui:
 
-O repositório contém:
-- `index.html` — aplicação completa (HTML/CSS/JS).
-- `.nojekyll` — evita que o GitHub Pages processe com Jekyll (útil para arquivos que começam com `_`).
-- `README.md` — instruções.
+- `index.html`: front-end do simulador (Leaflet + voz + waypoints + histórico de missão).
+- `server/`: API Node.js/Express para persistir dados (missões e configurações) em JSON.
 
-Como publicar (opções):
+## 1) Rodar localmente
 
-Opção A — Usando um repositório normal (URL ficará: `https://<usuario>.github.io/<repo>`):
-1. Faça push dos arquivos para a branch `main` (já tratado).
-2. No GitHub (Settings → Pages) selecione:
-   - Branch: `main` e diretório `/ (root)`
-   - Salve — o site ficará disponível em `https://<usuario>.github.io/<repo>` em alguns minutos.
+### Front-end
+```bash
+python -m http.server 8000
+```
+Acesse: `http://127.0.0.1:8000`
 
-Opção B — Site no domínio root `https://<usuario>.github.io` (se quiser sem `/repo`):
-1. Crie/renomeie o repositório para exatamente: `<usuario>.github.io`.
-2. Faça o push dos arquivos para a branch `main`.
-3. O site ficará disponível em `https://<usuario>.github.io` imediatamente (após publicação).
+### API de dados
+```bash
+cd server
+npm install
+npm start
+```
+API em: `http://127.0.0.1:8787`
 
-Observações:
-- A aplicação usa localStorage para dados locais; o backup/restore é feito por arquivo `.json`.
-- A app usa jsPDF via CDN para gerar relatórios em PDF — funciona no GitHub Pages.
-- Se quiser custom domain (ex: meu-dominio.com), adicione um arquivo `CNAME` com o domínio e configure DNS conforme a documentação do GitHub Pages.
-- Posso automatizar o deploy (GitHub Actions) ou criar o repositório e enviar os arquivos para você — me diga se quer CI/CD ou separação de assets.
+Endpoints principais:
+- `GET /health`
+- `GET /api/simulator`
+- `PUT /api/simulator/settings`
+- `GET /api/simulator/missions`
+- `POST /api/simulator/missions`
+- `DELETE /api/simulator/missions`
 
-Se quiser separar CSS/JS em arquivos próprios (melhor organização), eu posso adicionar a estrutura `assets/css` e `assets/js`.
+## 2) Publicar no GitHub + servidor de dados
+
+O GitHub Pages hospeda **somente front-end estático**. Para ter servidor de dados, publique a pasta `server/` em um provedor Node (Render/Railway/Fly.io) conectado ao seu repositório GitHub.
+
+### Fluxo sugerido (Render)
+1. Suba o repositório no GitHub.
+2. No Render, crie um *Web Service* ligado ao repositório.
+3. Configure:
+   - **Root Directory:** `server`
+   - **Build Command:** `npm install`
+   - **Start Command:** `npm start`
+4. Deploy.
+5. Copie a URL pública (ex.: `https://seu-servidor.onrender.com`).
+6. No navegador do simulador, configure a base da API:
+   ```js
+   localStorage.setItem('dr_api_base', 'https://seu-servidor.onrender.com')
+   location.reload()
+   ```
+
+## 3) Persistência no front-end
+
+O front-end tenta conectar em `http://127.0.0.1:8787` por padrão.
+
+- Se a API estiver online: salva/carrega histórico e configurações.
+- Se estiver offline: entra em modo local sem quebrar a UI.
+
+## 4) Observações
+
+- O servidor salva dados em `server/data/simulator-db.json`.
+- Para produção, pode trocar por banco real (PostgreSQL/MongoDB).
+- Para múltiplos usuários, recomendamos autenticação e separação por conta/projeto.
