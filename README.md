@@ -7,6 +7,7 @@ Este repositório publica um site institucional estático da solução ERP SaaS 
 - `index.html` — página institucional responsiva pronta para publicação.
 - `master.html` — painel de controle do usuário master (módulos, cadastro de empresas, liberação de acesso e geração de links).
 - `tenant.html` — ambiente de teste das empresas, acessado por link gerado no master.
+- `app.html` — página com módulos funcionais para uso (dashboard, clientes, produtos, PDV, financeiro e relatórios).
 - `.nojekyll` — garante publicação estática no GitHub Pages sem processamento Jekyll.
 - `docs/` — documentação técnica (arquitetura, schema e API) para evolução do produto.
 
@@ -18,6 +19,7 @@ Este repositório publica um site institucional estático da solução ERP SaaS 
 4. Vá em **Liberação de acesso**, selecione a empresa e os módulos.
 5. Clique em **Gerar link de acesso**.
 6. Compartilhe o link com a empresa para ela testar os módulos em `tenant.html` com as credenciais definidas no master.
+7. Após login no tenant, clique em **Abrir módulos funcionais** para usar o sistema em `app.html`.
 
 ## Publicar no GitHub Pages
 

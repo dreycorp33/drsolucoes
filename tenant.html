@@ -47,6 +47,7 @@
       <p class="muted" id="companyInfo"></p>
       <h3>Módulos liberados para teste</h3>
       <div class="mods" id="mods"></div>
+      <button class="btn" id="btnAbrirSistema">Abrir módulos funcionais</button>
     </section>
   </main>
 
@@ -79,6 +80,9 @@
       document.getElementById('companyTitle').textContent = `Empresa: ${company.nome}`;
       document.getElementById('companyInfo').textContent = `Plano: ${company.plano} • Ambiente: ${release.env}`;
       document.getElementById('mods').innerHTML = release.modules.map(m => `<div class="mod"><strong>${m}</strong><span class="muted">Módulo liberado para homologação e testes.</span></div>`).join('');
+      document.getElementById('btnAbrirSistema').onclick = () => {
+        location.href = `app.html?cid=${encodeURIComponent(cid)}&t=${encodeURIComponent(token)}`;
+      };
     });
   </script>
 </body>
