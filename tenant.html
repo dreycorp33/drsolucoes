@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Ambiente de teste da empresa com módulos liberados pelo master." />
+  <title>Ambiente da Empresa | DR Soluções</title>
+  <style>
+    :root {
+      --bg:#0b1220; --panel:#111b33; --border:#29406f; --text:#e8efff; --muted:#a0b4de; --ok:#20c997;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
+    .container{width:min(1100px,93vw);margin:0 auto}
+    header{border-bottom:1px solid #1f2b46;padding:14px 0}
+    .panel{background:linear-gradient(160deg,#131f39,#192a4c);border:1px solid var(--border);border-radius:14px;padding:16px}
+    .login{max-width:460px;margin:40px auto}
+    label{display:block;color:var(--muted);font-size:.86rem;margin-bottom:4px}
+    input{width:100%;padding:10px;border-radius:10px;border:1px solid #365187;background:#0f1830;color:var(--text)}
+    .btn{margin-top:10px;border:0;border-radius:10px;padding:10px 14px;font-weight:700;background:#4f8cff;color:#fff;cursor:pointer}
+    .muted{color:var(--muted)}
+    .hidden{display:none}
+    .mods{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+    .mod{background:#0f1a33;border:1px solid #2f467a;border-radius:10px;padding:12px}
+    .mod strong{display:block;margin-bottom:6px}
+    @media(max-width:900px){.mods{grid-template-columns:1fr 1fr}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">Ambiente de Teste da Empresa • DR Soluções</div>
+  </header>
+
+  <main class="container">
+    <section id="loginBox" class="panel login">
+      <h2 style="margin-top:0">Acesso da empresa</h2>
+      <p class="muted" id="loginHelp">Entre com usuário e senha definidos no painel master.</p>
+      <label>Usuário</label>
+      <input id="user" />
+      <label style="margin-top:8px">Senha</label>
+      <input id="pass" type="password" />
+      <button class="btn" id="btnLogin">Entrar</button>
+    </section>
+
+    <section id="app" class="hidden panel" style="margin-top:20px">
+      <h2 style="margin-top:0" id="companyTitle">Empresa</h2>
+      <p class="muted" id="companyInfo"></p>
+      <h3>Módulos liberados para teste</h3>
+      <div class="mods" id="mods"></div>
+    </section>
+  </main>
+
+  <script>
+    const STORE = { companies: 'dr_master_companies', releases: 'dr_master_releases' };
+    const getJSON = (k, fallback=[]) => { try { return JSON.parse(localStorage.getItem(k)) ?? fallback; } catch { return fallback; } };
+
+    const params = new URLSearchParams(location.search);
+    const cid = params.get('cid');
+    const token = params.get('t');
+
+    const companies = getJSON(STORE.companies, []);
+    const releases = getJSON(STORE.releases, []);
+    const company = companies.find(c => c.id === cid);
+    const release = releases.find(r => r.companyId === cid && r.token === token);
+
+    if (!company || !release) {
+      document.getElementById('loginHelp').textContent = 'Link inválido ou não liberado pelo master.';
+      document.getElementById('btnLogin').disabled = true;
+    }
+
+    document.getElementById('btnLogin').addEventListener('click', () => {
+      if (!company || !release) return;
+      const u = document.getElementById('user').value.trim();
+      const p = document.getElementById('pass').value;
+      if (u !== company.loginUser || p !== company.loginPass) return alert('Usuário ou senha inválidos.');
+
+      document.getElementById('loginBox').classList.add('hidden');
+      document.getElementById('app').classList.remove('hidden');
+      document.getElementById('companyTitle').textContent = `Empresa: ${company.nome}`;
+      document.getElementById('companyInfo').textContent = `Plano: ${company.plano} • Ambiente: ${release.env}`;
+      document.getElementById('mods').innerHTML = release.modules.map(m => `<div class="mod"><strong>${m}</strong><span class="muted">Módulo liberado para homologação e testes.</span></div>`).join('');
+    });
+  </script>
+</body>
+</html>
