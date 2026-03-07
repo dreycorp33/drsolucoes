@@ -1,29 +1,26 @@
-# Império Morangos - Site para GitHub Pages
+# drsolucoes — Blueprint ERP SaaS Comercial + PDV
 
-Esta é a versão estática (front-end) da aplicação "Império Morangos" preparada para publicar com GitHub Pages.
+Este repositório agora contém uma base de planejamento técnico para construir um sistema ERP comercial SaaS multiempresa com PDV, financeiro, estoque, relatórios e API REST.
 
-O repositório contém:
-- `index.html` — aplicação completa (HTML/CSS/JS).
-- `.nojekyll` — evita que o GitHub Pages processe com Jekyll (útil para arquivos que começam com `_`).
-- `README.md` — instruções.
+## Conteúdo
 
-Como publicar (opções):
+- `docs/saas-erp-architecture.md` — arquitetura de referência, módulos, segurança, fases de entrega e checklist de produção.
+- `docs/database-schema.sql` — modelo relacional inicial PostgreSQL multi-tenant com entidades principais.
+- `docs/api-openapi.yaml` — especificação OpenAPI inicial com endpoints essenciais (`/auth`, `/products`, `/customers`, `/sales`, `/reports`).
+- `index.html` — aplicação legada estática originalmente existente no projeto.
 
-Opção A — Usando um repositório normal (URL ficará: `https://<usuario>.github.io/<repo>`):
-1. Faça push dos arquivos para a branch `main` (já tratado).
-2. No GitHub (Settings → Pages) selecione:
-   - Branch: `main` e diretório `/ (root)`
-   - Salve — o site ficará disponível em `https://<usuario>.github.io/<repo>` em alguns minutos.
+## Como usar este material
 
-Opção B — Site no domínio root `https://<usuario>.github.io` (se quiser sem `/repo`):
-1. Crie/renomeie o repositório para exatamente: `<usuario>.github.io`.
-2. Faça o push dos arquivos para a branch `main`.
-3. O site ficará disponível em `https://<usuario>.github.io` imediatamente (após publicação).
+1. Revisar arquitetura e ajustar stack final.
+2. Importar schema SQL em ambiente PostgreSQL de desenvolvimento.
+3. Gerar servidor inicial da API a partir do OpenAPI/NestJS.
+4. Implementar em fases (fundação → PDV → financeiro/relatórios → escala SaaS).
 
-Observações:
-- A aplicação usa localStorage para dados locais; o backup/restore é feito por arquivo `.json`.
-- A app usa jsPDF via CDN para gerar relatórios em PDF — funciona no GitHub Pages.
-- Se quiser custom domain (ex: meu-dominio.com), adicione um arquivo `CNAME` com o domínio e configure DNS conforme a documentação do GitHub Pages.
-- Posso automatizar o deploy (GitHub Actions) ou criar o repositório e enviar os arquivos para você — me diga se quer CI/CD ou separação de assets.
+## Próximo passo recomendado
 
-Se quiser separar CSS/JS em arquivos próprios (melhor organização), eu posso adicionar a estrutura `assets/css` e `assets/js`.
+Criar monorepo com:
+
+- `apps/api` (NestJS)
+- `apps/web` (React + Vite)
+- `apps/institutional` (site institucional)
+- `packages/ui` (componentes compartilhados)
