@@ -48,6 +48,7 @@
       <h3>Módulos liberados para teste</h3>
       <div class="mods" id="mods"></div>
       <button class="btn" id="btnAbrirSistema">Abrir módulos funcionais</button>
+      <button class="btn" id="btnSubPaginaAtiva">Abrir subpágina empresa ativa</button>
     </section>
   </main>
 
@@ -74,6 +75,7 @@
       const u = document.getElementById('user').value.trim();
       const p = document.getElementById('pass').value;
       if (u !== company.loginUser || p !== company.loginPass) return alert('Usuário ou senha inválidos.');
+      if (company.status !== 'Ativa') return alert('Empresa não está ativa no master.');
 
       document.getElementById('loginBox').classList.add('hidden');
       document.getElementById('app').classList.remove('hidden');
@@ -82,6 +84,9 @@
       document.getElementById('mods').innerHTML = release.modules.map(m => `<div class="mod"><strong>${m}</strong><span class="muted">Módulo liberado para homologação e testes.</span></div>`).join('');
       document.getElementById('btnAbrirSistema').onclick = () => {
         location.href = `app.html?cid=${encodeURIComponent(cid)}&t=${encodeURIComponent(token)}`;
+      };
+      document.getElementById('btnSubPaginaAtiva').onclick = () => {
+        location.href = `empresa-ativa.html?cid=${encodeURIComponent(cid)}&t=${encodeURIComponent(token)}`;
       };
     });
   </script>
