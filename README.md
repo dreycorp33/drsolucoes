@@ -8,6 +8,7 @@ Este repositório publica um site institucional estático da solução ERP SaaS 
 - `master.html` — painel de controle do usuário master (módulos, cadastro de empresas, liberação de acesso e geração de links).
 - `tenant.html` — ambiente de teste das empresas, acessado por link gerado no master.
 - `app.html` — página com módulos funcionais para uso (dashboard, clientes, produtos, PDV, financeiro e relatórios).
+- `erp-completo.html` — HTML único completo com todas as funções principais do ERP/PDV (cadastros, vendas, estoque, financeiro, caixa, relatórios, configurações e backup).
 - `.nojekyll` — garante publicação estática no GitHub Pages sem processamento Jekyll.
 - `docs/` — documentação técnica (arquitetura, schema e API) para evolução do produto.
 
@@ -38,3 +39,9 @@ URL final: `https://<usuario>.github.io`
 1. Renomeie o repositório para `<usuario>.github.io`.
 2. Faça push da branch `main`.
 3. O site passa a servir no domínio raiz do usuário.
+
+
+## ERP completo em um único HTML
+
+- Abra `erp-completo.html` para usar o sistema completo em formato single-file.
+- Fluxo recomendado: cadastre empresa/admin em **Auth**, faça login e use os módulos pelo menu lateral.

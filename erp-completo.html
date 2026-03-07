@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="ERP SaaS Comercial completo em HTML para demonstração funcional." />
+  <title>DR Soluções • ERP Completo (Demo)</title>
+  <style>
+    :root{--bg:#0b1220;--panel:#121d36;--panel2:#1a2b4c;--txt:#ebf1ff;--muted:#9eb4df;--pri:#4f8cff;--ok:#20c997;--warn:#ffb454;--danger:#ff5e73;--border:#304877}
+    *{box-sizing:border-box} body{margin:0;font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--txt)}
+    .container{width:min(1280px,95vw);margin:0 auto}
+    header{border-bottom:1px solid #1f2b46;background:rgba(11,18,32,.95)} .top{display:flex;justify-content:space-between;align-items:center;padding:12px 0;gap:12px;flex-wrap:wrap}
+    .row{display:grid;grid-template-columns:260px 1fr;gap:12px;padding:14px 0 24px}
+    .panel{background:linear-gradient(160deg,var(--panel),var(--panel2));border:1px solid var(--border);border-radius:12px;padding:12px}
+    .menu{display:grid;gap:6px;max-height:75vh;overflow:auto}.menu button{padding:9px;border-radius:8px;border:1px solid #3b5690;background:#0f1a33;color:var(--txt);text-align:left;cursor:pointer}.menu button.active,.menu button:hover{background:#172a52}
+    .tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.tabs button{padding:8px;border-radius:8px;border:1px solid #3b5690;background:#0f1a33;color:var(--txt);cursor:pointer}
+    .tabs button.active{background:#1a315f}
+    .section{display:none}.section.active{display:block}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+    label{display:block;color:var(--muted);font-size:.84rem;margin-bottom:4px}input,select,textarea{width:100%;padding:8px;border-radius:8px;border:1px solid #3a548e;background:#0f1831;color:var(--txt)}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.btn{border:0;border-radius:8px;padding:8px 12px;font-weight:700;cursor:pointer}.pri{background:var(--pri);color:#fff}.ok{background:var(--ok);color:#fff}.warn{background:var(--warn);color:#111}.danger{background:var(--danger);color:#fff}
+    table{width:100%;border-collapse:collapse;margin-top:8px}th,td{padding:7px;border-bottom:1px solid #2f446f;font-size:.86rem;text-align:left;vertical-align:top}th{color:#cde0ff}
+    .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.kpi{background:#0f1a33;border:1px solid #334d82;border-radius:10px;padding:10px}.kpi strong{display:block;font-size:1rem}.muted{color:var(--muted)}
+    .pill{display:inline-block;border:1px solid #4f69a5;border-radius:999px;padding:3px 8px;margin:2px;color:#cfe0ff;font-size:.78rem}
+    .hidden{display:none}
+    @media(max-width:1080px){.row{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}.grid,.grid-3,.grid-4{grid-template-columns:1fr}.tabs{grid-template-columns:1fr 1fr}}
+  </style>
+</head>
+<body>
+<header>
+  <div class="container top">
+    <div>
+      <strong>DR Soluções • ERP Completo (HTML único)</strong>
+      <div class="muted">Demo funcional com módulos: Auth, Dashboard, PDV, Produtos, Clientes, Estoque, Financeiro, Relatórios, Caixa, Configurações, Backup</div>
+    </div>
+    <div class="actions">
+      <button class="btn pri" id="btnExportar">Backup JSON</button>
+      <label class="btn warn" for="importFile">Restaurar JSON</label>
+      <input id="importFile" type="file" class="hidden" accept="application/json" />
+      <a class="btn" href="index.html" style="text-decoration:none;background:#0f1a33;color:#d5e5ff;border:1px solid #3f578f">Voltar site</a>
+    </div>
+  </div>
+</header>
+
+<div class="container row">
+  <aside class="panel">
+    <h3 style="margin-top:0">Módulos</h3>
+    <div class="menu" id="menu"></div>
+  </aside>
+
+  <main class="panel">
+    <section id="auth" class="section active">
+      <h2 style="margin-top:0">1) Autenticação + Multiempresa (demo)</h2>
+      <div class="tabs" style="margin-bottom:8px">
+        <button class="active" data-auth-tab="login">Login</button>
+        <button data-auth-tab="register">Cadastrar empresa + admin</button>
+      </div>
+      <div id="auth-login">
+        <div class="grid">
+          <div><label>Empresa</label><select id="loginTenant"></select></div>
+          <div><label>Email</label><input id="loginEmail" /></div>
+          <div><label>Senha</label><input id="loginPass" type="password" /></div>
+          <div><label>Perfil</label><input id="loginRole" disabled placeholder="admin/gerente/caixa/financeiro"/></div>
+        </div>
+        <div class="actions"><button class="btn pri" id="btnLogin">Entrar</button><button class="btn danger" id="btnLogout">Sair</button></div>
+      </div>
+      <div id="auth-register" class="hidden">
+        <div class="grid-3">
+          <div><label>Nome da empresa</label><input id="regTenant" /></div>
+          <div><label>CNPJ</label><input id="regCnpj" /></div>
+          <div><label>Plano</label><select id="regPlan"><option>Starter</option><option>Pro</option><option>Enterprise</option></select></div>
+          <div><label>Nome admin</label><input id="regName" /></div>
+          <div><label>Email admin</label><input id="regEmail" /></div>
+          <div><label>Senha admin</label><input id="regPass" type="password" /></div>
+        </div>
+        <div class="actions"><button class="btn ok" id="btnRegister">Cadastrar</button></div>
+      </div>
+      <p class="muted">Sessão atual: <span id="sessionInfo">não autenticado</span></p>
+    </section>
+
+    <section id="dashboard" class="section">
+      <h2 style="margin-top:0">2) Dashboard Inteligente</h2>
+      <div class="kpis">
+        <div class="kpi"><strong id="kpiDay">R$ 0,00</strong><span>Faturamento dia</span></div>
+        <div class="kpi"><strong id="kpiMonth">R$ 0,00</strong><span>Faturamento mês</span></div>
+        <div class="kpi"><strong id="kpiTicket">R$ 0,00</strong><span>Ticket médio</span></div>
+        <div class="kpi"><strong id="kpiSales">0</strong><span>Vendas realizadas</span></div>
+        <div class="kpi"><strong id="kpiClients">0</strong><span>Clientes ativos</span></div>
+      </div>
+      <p class="muted" style="margin-top:8px">Top produtos: <span id="topProducts"></span></p>
+    </section>
+
+    <section id="produtos" class="section">
+      <h2 style="margin-top:0">3) Cadastro avançado de produtos</h2>
+      <div class="grid-4">
+        <div><label>Nome</label><input id="p_nome" /></div><div><label>SKU</label><input id="p_sku" /></div><div><label>Código barras</label><input id="p_bar" /></div><div><label>Categoria</label><input id="p_cat" /></div>
+        <div><label>Subcategoria</label><input id="p_sub" /></div><div><label>Fornecedor</label><input id="p_forn" /></div><div><label>Preço custo</label><input id="p_custo" type="number" step="0.01"/></div><div><label>Preço venda</label><input id="p_venda" type="number" step="0.01"/></div>
+        <div><label>Margem %</label><input id="p_margem" type="number" step="0.01"/></div><div><label>Estoque atual</label><input id="p_estoque" type="number" step="0.001"/></div><div><label>Estoque mínimo</label><input id="p_min" type="number" step="0.001"/></div><div><label>Unidade</label><input id="p_un" value="UN" /></div>
+        <div><label>Imagem URL</label><input id="p_img" /></div><div><label>Status</label><select id="p_status"><option>Ativo</option><option>Inativo</option></select></div><div><label>Produto composto</label><select id="p_comp"><option>Não</option><option>Sim</option></select></div><div><label>Variações</label><input id="p_var" placeholder="Tamanho, cor"/></div>
+      </div>
+      <div><label>Descrição</label><textarea id="p_desc"></textarea></div>
+      <div class="actions"><button class="btn ok" id="btnAddProd">Salvar produto</button><button class="btn warn" id="btnExportProdCsv">Exportar CSV</button></div>
+      <table><thead><tr><th>Nome</th><th>SKU</th><th>Preço</th><th>Estoque</th><th>Status</th></tr></thead><tbody id="tbProd"></tbody></table>
+    </section>
+
+    <section id="clientes" class="section">
+      <h2 style="margin-top:0">4) Sistema completo de clientes</h2>
+      <div class="grid-4">
+        <div><label>Nome</label><input id="c_nome" /></div><div><label>CPF/CNPJ</label><input id="c_doc" /></div><div><label>Email</label><input id="c_email" /></div><div><label>Telefone</label><input id="c_tel" /></div>
+        <div><label>WhatsApp</label><input id="c_wpp" /></div><div><label>CEP</label><input id="c_cep" /></div><div><label>Rua</label><input id="c_rua" /></div><div><label>Número</label><input id="c_num" /></div>
+        <div><label>Bairro</label><input id="c_bairro" /></div><div><label>Cidade</label><input id="c_cidade" /></div><div><label>Estado</label><input id="c_uf" /></div><div><label>Complemento</label><input id="c_comp" /></div>
+        <div><label>Limite crédito</label><input id="c_lim" type="number" step="0.01"/></div><div><label>Classificação</label><input id="c_class" /></div>
+      </div>
+      <div class="actions"><button class="btn ok" id="btnAddCli">Salvar cliente</button></div>
+      <table><thead><tr><th>Nome</th><th>Documento</th><th>Contato</th><th>Limite</th></tr></thead><tbody id="tbCli"></tbody></table>
+    </section>
+
+    <section id="pdv" class="section">
+      <h2 style="margin-top:0">5) PDV (touch-friendly)</h2>
+      <div class="grid-4">
+        <div><label>Cliente (opcional)</label><select id="v_cli"></select></div>
+        <div><label>Produto</label><select id="v_prod"></select></div>
+        <div><label>Quantidade</label><input id="v_qtd" type="number" value="1" min="1"/></div>
+        <div><label>Desconto item (R$)</label><input id="v_desc" type="number" step="0.01" value="0"/></div>
+      </div>
+      <div class="actions"><button class="btn pri" id="btnCarrinho">Adicionar item</button></div>
+      <table><thead><tr><th>Produto</th><th>Qtd</th><th>Unit.</th><th>Desc.</th><th>Total</th></tr></thead><tbody id="tbCart"></tbody></table>
+      <div class="grid-4">
+        <div><label>Forma pagamento</label><select id="v_pag"><option>Dinheiro</option><option>PIX</option><option>Cartão crédito</option><option>Cartão débito</option><option>Múltiplo</option></select></div>
+        <div><label>Subtotal</label><input id="v_sub" disabled/></div>
+        <div><label>Desconto total</label><input id="v_dtotal" value="0" type="number" step="0.01"/></div>
+        <div><label>Total final</label><input id="v_total" disabled/></div>
+      </div>
+      <div class="actions"><button class="btn ok" id="btnFecharVenda">Finalizar venda</button><button class="btn danger" id="btnLimparCarrinho">Limpar</button></div>
+      <table><thead><tr><th>Data</th><th>Cliente</th><th>Itens</th><th>Total</th><th>Status</th></tr></thead><tbody id="tbSales"></tbody></table>
+    </section>
+
+    <section id="estoque" class="section">
+      <h2 style="margin-top:0">6) Controle de estoque</h2>
+      <div class="grid-3">
+        <div><label>Produto</label><select id="e_prod"></select></div>
+        <div><label>Tipo movimento</label><select id="e_tipo"><option>ENTRADA</option><option>SAIDA</option><option>INVENTARIO</option></select></div>
+        <div><label>Quantidade</label><input id="e_qtd" type="number" step="0.001"/></div>
+      </div>
+      <div><label>Motivo</label><input id="e_motivo" /></div>
+      <div class="actions"><button class="btn warn" id="btnMovEstoque">Registrar movimento</button></div>
+      <p class="muted">Alertas: <span id="estoqueAlertas"></span></p>
+      <table><thead><tr><th>Data</th><th>Produto</th><th>Tipo</th><th>Qtd</th><th>Motivo</th></tr></thead><tbody id="tbMov"></tbody></table>
+    </section>
+
+    <section id="financeiro" class="section">
+      <h2 style="margin-top:0">7) Financeiro</h2>
+      <div class="grid-4">
+        <div><label>Tipo</label><select id="f_tipo"><option>RECEBER</option><option>PAGAR</option></select></div>
+        <div><label>Categoria</label><input id="f_cat" /></div>
+        <div><label>Descrição</label><input id="f_desc" /></div>
+        <div><label>Valor</label><input id="f_val" type="number" step="0.01"/></div>
+        <div><label>Vencimento</label><input id="f_venc" type="date"/></div>
+        <div><label>Status</label><select id="f_status"><option>PENDENTE</option><option>PAGO</option></select></div>
+      </div>
+      <div class="actions"><button class="btn ok" id="btnAddFin">Salvar lançamento</button></div>
+      <table><thead><tr><th>Tipo</th><th>Descrição</th><th>Valor</th><th>Status</th><th>Vencimento</th></tr></thead><tbody id="tbFin"></tbody></table>
+    </section>
+
+    <section id="caixa" class="section">
+      <h2 style="margin-top:0">8) Controle de caixa</h2>
+      <div class="grid-4">
+        <div><label>Valor abertura</label><input id="cx_open" type="number" step="0.01"/></div>
+        <div><label>Valor sangria</label><input id="cx_sangria" type="number" step="0.01"/></div>
+        <div><label>Valor fechamento</label><input id="cx_close" type="number" step="0.01"/></div>
+      </div>
+      <div class="actions"><button class="btn pri" id="btnAbrirCx">Abrir caixa</button><button class="btn warn" id="btnSangria">Registrar sangria</button><button class="btn ok" id="btnFecharCx">Fechar caixa</button></div>
+      <table><thead><tr><th>Abertura</th><th>Fechamento</th><th>Status</th><th>Abertura R$</th><th>Fechamento R$</th></tr></thead><tbody id="tbCx"></tbody></table>
+    </section>
+
+    <section id="relatorios" class="section">
+      <h2 style="margin-top:0">9) Relatórios avançados</h2>
+      <div class="actions"><button class="btn warn" id="btnRelCsv">Exportar vendas CSV</button><button class="btn pri" id="btnRelJson">Exportar JSON geral</button></div>
+      <table><tbody id="tbRep"></tbody></table>
+    </section>
+
+    <section id="config" class="section">
+      <h2 style="margin-top:0">10) Configurações do sistema</h2>
+      <div class="grid-4">
+        <div><label>Nome empresa</label><input id="s_nome"/></div><div><label>CNPJ</label><input id="s_cnpj"/></div><div><label>Telefone</label><input id="s_tel"/></div><div><label>Endereço</label><input id="s_end"/></div>
+        <div><label>Tema</label><select id="s_tema"><option>Escuro</option><option>Claro</option></select></div><div><label>Cor primária</label><input id="s_cor" value="#4f8cff"/></div>
+      </div>
+      <div class="actions"><button class="btn ok" id="btnSalvarCfg">Salvar configurações</button></div>
+    </section>
+
+    <section id="api" class="section">
+      <h2 style="margin-top:0">11) API REST (referência)</h2>
+      <div>
+        <span class="pill">/auth</span><span class="pill">/products</span><span class="pill">/customers</span><span class="pill">/sales</span><span class="pill">/reports</span>
+      </div>
+      <p class="muted">Documentação detalhada no arquivo <code>docs/api-openapi.yaml</code>.</p>
+    </section>
+  </main>
+</div>
+
+<script>
+const DB_KEY='dr_erp_full_db_v1';
+const SESSION_KEY='dr_erp_full_session_v1';
+const $=id=>document.getElementById(id);
+const money=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const today=()=>new Date().toISOString().slice(0,10);
+const month=()=>new Date().toISOString().slice(0,7);
+
+const defaultDb={tenants:[],users:[],products:[],customers:[],sales:[],stockMovements:[],finance:[],cash:[],settings:[],audit:[]};
+let db=load(DB_KEY,defaultDb); let session=load(SESSION_KEY,null); let cart=[];
+function load(k,f){try{return JSON.parse(localStorage.getItem(k))??f}catch{return f}}
+function save(){localStorage.setItem(DB_KEY,JSON.stringify(db)); localStorage.setItem(SESSION_KEY,JSON.stringify(session)); renderAll();}
+function requireLogin(){if(!session){alert('Faça login em Auth.'); showSection('auth'); return false;} return true;}
+function tenantFilter(list){return list.filter(i=>i.tenantId===session?.tenantId)}
+function audit(action,entity,meta={}){db.audit.push({id:Date.now()+Math.random(),tenantId:session?.tenantId||null,action,entity,meta,at:new Date().toISOString()})}
+
+const menuItems=[
+ ['auth','Auth'],['dashboard','Dashboard'],['produtos','Produtos'],['clientes','Clientes'],['pdv','PDV'],['estoque','Estoque'],['financeiro','Financeiro'],['caixa','Caixa'],['relatorios','Relatórios'],['config','Configurações'],['api','API']
+];
+$('menu').innerHTML=menuItems.map(([id,name],i)=>`<button data-sec="${id}" class="${i===0?'active':''}">${name}</button>`).join('');
+$('menu').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>showSection(b.dataset.sec)));
+function showSection(id){document.querySelectorAll('.section').forEach(s=>s.classList.remove('active')); $(id).classList.add('active'); document.querySelectorAll('.menu button').forEach(b=>b.classList.toggle('active',b.dataset.sec===id));}
+
+// Auth
+function fillTenants(){ $('loginTenant').innerHTML=db.tenants.map(t=>`<option value="${t.id}">${t.name}</option>`).join(''); }
+document.querySelectorAll('[data-auth-tab]').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('[data-auth-tab]').forEach(b=>b.classList.remove('active'));btn.classList.add('active');$('auth-login').classList.toggle('hidden',btn.dataset.authTab!=='login');$('auth-register').classList.toggle('hidden',btn.dataset.authTab!=='register');}));
+$('btnRegister').onclick=()=>{
+  const tName=$('regTenant').value.trim(), cnpj=$('regCnpj').value.trim(), plan=$('regPlan').value, name=$('regName').value.trim(), email=$('regEmail').value.trim(), pass=$('regPass').value;
+  if(!tName||!email||!pass||!name) return alert('Preencha empresa e admin.');
+  const tenantId='t_'+Date.now(); db.tenants.push({id:tenantId,name:tName,cnpj,plan,active:true}); db.users.push({id:'u_'+Date.now(),tenantId,name,email,pass,role:'Administrador',active:true}); db.settings.push({tenantId,name:tName,cnpj,phone:'',address:'',theme:'Escuro',color:'#4f8cff'}); audit('CREATE','tenant',{tName}); save(); alert('Empresa cadastrada.');
+};
+$('btnLogin').onclick=()=>{
+  const tenantId=$('loginTenant').value, email=$('loginEmail').value.trim(), pass=$('loginPass').value;
+  const user=db.users.find(u=>u.tenantId===tenantId&&u.email===email&&u.pass===pass&&u.active);
+  if(!user) return alert('Credenciais inválidas.');
+  session={tenantId,userId:user.id,role:user.role}; $('loginRole').value=user.role; audit('LOGIN','auth',{email}); save();
+};
+$('btnLogout').onclick=()=>{session=null; save();};
+
+// Produtos
+$('btnAddProd').onclick=()=>{if(!requireLogin())return;const p={id:'p_'+Date.now(),tenantId:session.tenantId,nome:$('p_nome').value.trim(),sku:$('p_sku').value.trim(),barcode:$('p_bar').value.trim(),categoria:$('p_cat').value.trim(),sub:$('p_sub').value.trim(),desc:$('p_desc').value.trim(),forn:$('p_forn').value.trim(),custo:Number($('p_custo').value||0),venda:Number($('p_venda').value||0),margem:Number($('p_margem').value||0),estoque:Number($('p_estoque').value||0),min:Number($('p_min').value||0),un:$('p_un').value.trim()||'UN',img:$('p_img').value.trim(),status:$('p_status').value,comp:$('p_comp').value,var:$('p_var').value.trim()};if(!p.nome||!p.sku||p.venda<=0)return alert('Nome, SKU e preço venda obrigatórios.');db.products.push(p);audit('CREATE','product',{sku:p.sku});save();};
+$('btnExportProdCsv').onclick=()=>downloadCsv('produtos.csv',['nome','sku','barcode','categoria','sub','venda','estoque','status'],tenantFilter(db.products));
+
+// Clientes
+$('btnAddCli').onclick=()=>{if(!requireLogin())return;const c={id:'c_'+Date.now(),tenantId:session.tenantId,nome:$('c_nome').value.trim(),doc:$('c_doc').value.trim(),email:$('c_email').value.trim(),tel:$('c_tel').value.trim(),wpp:$('c_wpp').value.trim(),cep:$('c_cep').value.trim(),rua:$('c_rua').value.trim(),num:$('c_num').value.trim(),bairro:$('c_bairro').value.trim(),cidade:$('c_cidade').value.trim(),uf:$('c_uf').value.trim(),comp:$('c_comp').value.trim(),limite:Number($('c_lim').value||0),classif:$('c_class').value.trim()};if(!c.nome)return alert('Nome obrigatório.');db.customers.push(c);audit('CREATE','customer',{nome:c.nome});save();};
+
+// PDV
+$('btnCarrinho').onclick=()=>{if(!requireLogin())return;const prodId=$('v_prod').value,qtd=Number($('v_qtd').value||1),desc=Number($('v_desc').value||0);const p=tenantFilter(db.products).find(x=>x.id===prodId);if(!p)return alert('Produto inválido.');if(qtd<=0)return alert('Qtd inválida');cart.push({prodId:p.id,nome:p.nome,qtd,unit:p.venda,desc,total:Number((p.venda*qtd-desc).toFixed(2))});renderCart();};
+$('btnLimparCarrinho').onclick=()=>{cart=[];renderCart();};
+$('btnFecharVenda').onclick=()=>{if(!requireLogin())return;if(cart.length===0)return alert('Carrinho vazio');const cliId=$('v_cli').value||null;const dTotal=Number($('v_dtotal').value||0);const sub=cart.reduce((a,b)=>a+b.unit*b.qtd,0);const total=Number((sub-dTotal).toFixed(2));if(total<=0)return alert('Total inválido');const sale={id:'s_'+Date.now(),tenantId:session.tenantId,date:new Date().toISOString(),clientId:cliId,items:[...cart],sub,total,pag:$('v_pag').value,status:'PAGO'};db.sales.push(sale);
+  cart.forEach(i=>{const p=db.products.find(x=>x.id===i.prodId&&x.tenantId===session.tenantId);if(p){p.estoque=Number((p.estoque-i.qtd).toFixed(3));db.stockMovements.push({id:'m_'+Math.random(),tenantId:session.tenantId,date:new Date().toISOString(),prodId:p.id,produto:p.nome,tipo:'SAIDA',qtd:i.qtd,motivo:'Venda PDV'})}});
+  db.finance.push({id:'f_'+Date.now(),tenantId:session.tenantId,tipo:'RECEBER',cat:'Vendas',desc:'Venda PDV',valor:total,venc:today(),status:'PAGO'});
+  audit('CREATE','sale',{total}); cart=[]; save(); alert('Venda finalizada com sucesso.');};
+
+// Estoque
+$('btnMovEstoque').onclick=()=>{if(!requireLogin())return;const id=$('e_prod').value,tipo=$('e_tipo').value,qtd=Number($('e_qtd').value||0),motivo=$('e_motivo').value.trim();const p=db.products.find(x=>x.id===id&&x.tenantId===session.tenantId);if(!p||qtd<=0)return alert('Produto/qtd inválido'); if(tipo==='ENTRADA')p.estoque+=qtd; else if(tipo==='SAIDA')p.estoque-=qtd; else p.estoque=qtd; db.stockMovements.push({id:'m_'+Date.now(),tenantId:session.tenantId,date:new Date().toISOString(),prodId:p.id,produto:p.nome,tipo,qtd,motivo});audit('CREATE','stock_move',{tipo,qtd});save();};
+
+// Financeiro
+$('btnAddFin').onclick=()=>{if(!requireLogin())return;const f={id:'f_'+Date.now(),tenantId:session.tenantId,tipo:$('f_tipo').value,cat:$('f_cat').value.trim(),desc:$('f_desc').value.trim(),valor:Number($('f_val').value||0),venc:$('f_venc').value,status:$('f_status').value};if(f.valor<=0)return alert('Valor inválido');db.finance.push(f);audit('CREATE','finance',{tipo:f.tipo,valor:f.valor});save();};
+
+// Caixa
+function openCash(){return tenantFilter(db.cash).find(c=>c.status==='ABERTO')}
+$('btnAbrirCx').onclick=()=>{if(!requireLogin())return;if(openCash())return alert('Já existe caixa aberto');db.cash.push({id:'cx_'+Date.now(),tenantId:session.tenantId,openAt:new Date().toISOString(),closeAt:null,open:Number($('cx_open').value||0),close:null,sangrias:[],status:'ABERTO'});audit('OPEN','cash');save();};
+$('btnSangria').onclick=()=>{if(!requireLogin())return;const c=openCash();if(!c)return alert('Abra o caixa');const v=Number($('cx_sangria').value||0);if(v<=0)return alert('Valor inválido');c.sangrias.push({at:new Date().toISOString(),valor:v});audit('SANGRIA','cash',{valor:v});save();};
+$('btnFecharCx').onclick=()=>{if(!requireLogin())return;const c=openCash();if(!c)return alert('Sem caixa aberto');c.closeAt=new Date().toISOString();c.close=Number($('cx_close').value||0);c.status='FECHADO';audit('CLOSE','cash',{close:c.close});save();};
+
+// Config
+$('btnSalvarCfg').onclick=()=>{if(!requireLogin())return;let s=db.settings.find(x=>x.tenantId===session.tenantId);if(!s){s={tenantId:session.tenantId};db.settings.push(s)}Object.assign(s,{name:$('s_nome').value,cnpj:$('s_cnpj').value,phone:$('s_tel').value,address:$('s_end').value,theme:$('s_tema').value,color:$('s_cor').value});document.documentElement.style.setProperty('--pri',s.color||'#4f8cff');audit('UPDATE','settings',{});save();};
+
+// Relatórios/backup
+function download(name,text,type='text/plain'){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();}
+function downloadCsv(name,cols,data){const csv=[cols.join(',')].concat(data.map(r=>cols.map(c=>`"${String(r[c]??'').replaceAll('"','""')}"`).join(','))).join('\n');download(name,csv,'text/csv');}
+$('btnRelCsv').onclick=()=>{if(!requireLogin())return;downloadCsv('vendas.csv',['date','total','pag','status'],tenantFilter(db.sales));};
+$('btnRelJson').onclick=()=>download('relatorio.json',JSON.stringify(tenantSnapshot(),null,2),'application/json');
+$('btnExportar').onclick=()=>download('backup_erp.json',JSON.stringify(db,null,2),'application/json');
+$('importFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{db=JSON.parse(r.result);alert('Backup restaurado!');save();}catch{alert('Arquivo inválido')}};r.readAsText(f)};
+
+function tenantSnapshot(){if(!session)return{};return {tenant:db.tenants.find(t=>t.id===session.tenantId),products:tenantFilter(db.products),customers:tenantFilter(db.customers),sales:tenantFilter(db.sales),stock:tenantFilter(db.stockMovements),finance:tenantFilter(db.finance),cash:tenantFilter(db.cash),audit:tenantFilter(db.audit)};}
+
+function renderCart(){const sub=cart.reduce((a,b)=>a+b.unit*b.qtd,0);$('tbCart').innerHTML=cart.map(i=>`<tr><td>${i.nome}</td><td>${i.qtd}</td><td>${money(i.unit)}</td><td>${money(i.desc)}</td><td>${money(i.total)}</td></tr>`).join('')||'<tr><td colspan="5" class="muted">Carrinho vazio</td></tr>'; $('v_sub').value=money(sub); const d=Number($('v_dtotal').value||0); $('v_total').value=money(sub-d);}
+$('v_dtotal').oninput=renderCart;
+
+function renderAll(){
+  fillTenants();
+  const user=session?db.users.find(u=>u.id===session.userId):null; $('sessionInfo').textContent=session?`${db.tenants.find(t=>t.id===session.tenantId)?.name} • ${user?.email} • ${session.role}`:'não autenticado'; $('loginRole').value=user?.role||'';
+  const pro=tenantFilter(db.products), cli=tenantFilter(db.customers), sal=tenantFilter(db.sales), fin=tenantFilter(db.finance), mov=tenantFilter(db.stockMovements), cx=tenantFilter(db.cash);
+
+  $('tbProd').innerHTML=pro.map(p=>`<tr><td>${p.nome}</td><td>${p.sku}</td><td>${money(p.venda)}</td><td>${p.estoque} ${p.un}</td><td>${p.status}</td></tr>`).join('')||'<tr><td colspan="5" class="muted">Sem produtos</td></tr>';
+  $('tbCli').innerHTML=cli.map(c=>`<tr><td>${c.nome}</td><td>${c.doc||''}</td><td>${c.tel||''} ${c.email||''}</td><td>${money(c.limite||0)}</td></tr>`).join('')||'<tr><td colspan="4" class="muted">Sem clientes</td></tr>';
+  $('v_cli').innerHTML='<option value="">Sem cliente</option>'+cli.map(c=>`<option value="${c.id}">${c.nome}</option>`).join('');
+  $('v_prod').innerHTML=pro.filter(p=>p.status==='Ativo').map(p=>`<option value="${p.id}">${p.nome} (${money(p.venda)})</option>`).join('');
+  $('e_prod').innerHTML=pro.map(p=>`<option value="${p.id}">${p.nome}</option>`).join('');
+
+  $('tbSales').innerHTML=sal.slice().reverse().map(s=>`<tr><td>${new Date(s.date).toLocaleString('pt-BR')}</td><td>${cli.find(c=>c.id===s.clientId)?.nome||'-'}</td><td>${s.items.length} itens</td><td>${money(s.total)}</td><td>${s.status}</td></tr>`).join('')||'<tr><td colspan="5" class="muted">Sem vendas</td></tr>';
+  $('tbMov').innerHTML=mov.slice().reverse().map(m=>`<tr><td>${new Date(m.date).toLocaleString('pt-BR')}</td><td>${m.produto}</td><td>${m.tipo}</td><td>${m.qtd}</td><td>${m.motivo||''}</td></tr>`).join('')||'<tr><td colspan="5" class="muted">Sem movimentos</td></tr>';
+  $('tbFin').innerHTML=fin.slice().reverse().map(f=>`<tr><td>${f.tipo}</td><td>${f.desc||''}</td><td>${money(f.valor)}</td><td>${f.status}</td><td>${f.venc||''}</td></tr>`).join('')||'<tr><td colspan="5" class="muted">Sem lançamentos</td></tr>';
+  $('tbCx').innerHTML=cx.slice().reverse().map(c=>`<tr><td>${new Date(c.openAt).toLocaleString('pt-BR')}</td><td>${c.closeAt?new Date(c.closeAt).toLocaleString('pt-BR'):'-'}</td><td>${c.status}</td><td>${money(c.open)}</td><td>${c.close?money(c.close):'-'}</td></tr>`).join('')||'<tr><td colspan="5" class="muted">Sem sessões</td></tr>';
+
+  const daySales=sal.filter(s=>s.date.startsWith(today())).reduce((a,b)=>a+b.total,0); const monthSales=sal.filter(s=>s.date.startsWith(month())).reduce((a,b)=>a+b.total,0); const ticket=sal.length?monthSales/sal.length:0;
+  $('kpiDay').textContent=money(daySales); $('kpiMonth').textContent=money(monthSales); $('kpiTicket').textContent=money(ticket); $('kpiSales').textContent=sal.length; $('kpiClients').textContent=cli.length;
+  const prodCount={}; sal.forEach(s=>s.items.forEach(i=>prodCount[i.nome]=(prodCount[i.nome]||0)+i.qtd)); $('topProducts').textContent=Object.entries(prodCount).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([n,q])=>`${n} (${q})`).join(', ')||'Sem vendas';
+
+  const alertas=pro.filter(p=>p.estoque<=p.min).map(p=>`${p.nome} (baixo)`).join(', '); $('estoqueAlertas').textContent=alertas||'Sem alertas';
+
+  const receitas=fin.filter(f=>f.tipo==='RECEBER').reduce((a,b)=>a+b.valor,0)+sal.reduce((a,b)=>a+b.total,0); const despesas=fin.filter(f=>f.tipo==='PAGAR').reduce((a,b)=>a+b.valor,0); const lucro=receitas-despesas;
+  $('tbRep').innerHTML=`<tr><th>Receitas</th><td>${money(receitas)}</td></tr><tr><th>Despesas</th><td>${money(despesas)}</td></tr><tr><th>Lucro líquido</th><td>${money(lucro)}</td></tr><tr><th>Produtos mais vendidos</th><td>${$('topProducts').textContent}</td></tr><tr><th>Movimentos estoque</th><td>${mov.length}</td></tr><tr><th>Logs auditoria</th><td>${tenantFilter(db.audit).length}</td></tr>`;
+
+  const cfg=db.settings.find(s=>s.tenantId===session?.tenantId); if(cfg){$('s_nome').value=cfg.name||'';$('s_cnpj').value=cfg.cnpj||'';$('s_tel').value=cfg.phone||'';$('s_end').value=cfg.address||'';$('s_tema').value=cfg.theme||'Escuro';$('s_cor').value=cfg.color||'#4f8cff';document.documentElement.style.setProperty('--pri',cfg.color||'#4f8cff');}
+  renderCart();
+}
+
+renderAll();
+</script>
+</body>
+</html>
