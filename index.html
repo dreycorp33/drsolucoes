@@ -478,10 +478,73 @@ function logTo(el, msg){
   box.textContent += msg + "\n";
   box.scrollTop = box.scrollHeight;
 }
-function mission(msg, kind="info"){
+function mission(msg, kind="info", persist=true){
   const prefix = kind==="ok"?"✅":kind==="warn"?"⚠️":kind==="bad"?"🛑":"ℹ️";
-  logTo("missionList", `[${nowStr()}] ${prefix} ${msg}`);
+  const line = `[${nowStr()}] ${prefix} ${msg}`;
+  logTo("missionList", line);
+  if (persist) {
+    api.addMission({ text: msg, kind, line }).catch(() => {});
+  }
 }
+
+const api = {
+  baseUrl: (window.localStorage.getItem("dr_api_base") || "http://127.0.0.1:8787").replace(/\/$/, ""),
+  enabled: true,
+
+  async request(path, options = {}) {
+    if (!this.enabled) return null;
+    const url = `${this.baseUrl}${path}`;
+    try {
+      const res = await fetch(url, {
+        headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+        ...options
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (res.status === 204) return null;
+      return await res.json();
+    } catch (err) {
+      this.enabled = false;
+      logTo("missionList", `[${nowStr()}] ⚠️ API offline (${err.message}). Usando modo local.`);
+      return null;
+    }
+  },
+
+  async bootstrap() {
+    const data = await this.request("/api/simulator");
+    if (!data) return;
+
+    if (Array.isArray(data.missions) && data.missions.length) {
+      const lines = data.missions.map(m => m.line || `[${new Date(m.time).toLocaleTimeString()}] ${m.text}`);
+      $("missionList").textContent = lines.join("\n") + "\n";
+      $("missionList").scrollTop = $("missionList").scrollHeight;
+    }
+
+    const settings = data.settings || {};
+    if (Number.isFinite(settings.droneCount)) $("inpDroneCount").value = settings.droneCount;
+    if (Number.isFinite(settings.speed)) $("inpSpeed").value = settings.speed;
+    if (settings.city && $("selSulMinas").querySelector(`option[value="${settings.city}"]`)) $("selSulMinas").value = settings.city;
+    if (settings.language) $("selLang").value = settings.language;
+    if (settings.mapMode === "sat") setBaseLayer("sat");
+  },
+
+  async addMission(item) {
+    return this.request("/api/simulator/missions", {
+      method: "POST",
+      body: JSON.stringify({ ...item, time: new Date().toISOString() })
+    });
+  },
+
+  async clearMissions() {
+    return this.request("/api/simulator/missions", { method: "DELETE" });
+  },
+
+  async saveSettings(settings) {
+    return this.request("/api/simulator/settings", {
+      method: "PUT",
+      body: JSON.stringify(settings)
+    });
+  }
+};
 
 /* ========= TTS (avisos de voz) ========= */
 let ttsEnabled = false;
@@ -580,6 +643,20 @@ const state = {
   activeBase: "normal",
 };
 
+let settingsSaveTimer = null;
+function persistSettingsDebounced(){
+  clearTimeout(settingsSaveTimer);
+  settingsSaveTimer = setTimeout(() => {
+    api.saveSettings({
+      droneCount: Number($("inpDroneCount").value || 3),
+      speed: Number($("inpSpeed").value || 2.2),
+      city: $("selSulMinas").value || "PA",
+      mapMode: state.activeBase,
+      language: $("selLang").value || "pt-BR"
+    });
+  }, 250);
+}
+
 /* ========= map layers ========= */
 const normalLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   maxZoom:19,
@@ -618,6 +695,7 @@ function setBaseLayer(mode){
     setSbMap("Normal");
     mission("Mapa normal ativado.", "info");
   }
+  persistSettingsDebounced();
 }
 
 /* ========= overlay (drones) ========= */
@@ -1195,6 +1273,7 @@ function goCity(key){
   setSbMap(c.name);
   mission(`Foco: ${c.name}.`, "ok");
   speak(`Indo para ${c.name}.`);
+  persistSettingsDebounced();
 }
 
 /* ========= UI bindings ========= */
@@ -1233,7 +1312,16 @@ $("btnClearTrails").onclick = clearTrails;
 $("btnMapSat").onclick = () => setBaseLayer("sat");
 $("btnMapNormal").onclick = () => setBaseLayer("normal");
 
-$("btnClearMissions").onclick = () => { $("missionList").textContent=""; mission("Histórico limpo.", "info"); };
+$("btnClearMissions").onclick = async () => {
+  $("missionList").textContent="";
+  mission("Histórico limpo.", "info", false);
+  await api.clearMissions();
+};
+
+$("inpDroneCount").addEventListener("change", persistSettingsDebounced);
+$("inpSpeed").addEventListener("change", persistSettingsDebounced);
+$("selLang").addEventListener("change", persistSettingsDebounced);
+$("selSulMinas").addEventListener("change", persistSettingsDebounced);
 
 /* ========= Keyboard shortcuts ========= */
 document.addEventListener("keydown", (e) => {
@@ -1546,7 +1634,7 @@ $("btnVoice").onclick = () => {
 };
 
 /* ========= boot ========= */
-function boot(){
+async function boot(){
   $("kpiTime").textContent = "00:00";
   $("kpiDrones").textContent = "0";
   $("kpiPerimeter").textContent = "—";
@@ -1557,6 +1645,7 @@ function boot(){
   setSbDrone("—");
   refreshDroneSelect();
   refreshWaypointsUI();
+  await api.bootstrap();
   mission("Pronto. Shift+Clique adiciona waypoint. Voz: 'buscar endereço ...' e 'enviar drone para ...'.", "info");
 }
 boot();
