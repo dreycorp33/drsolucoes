@@ -1,0 +1,226 @@
+openapi: 3.0.3
+info:
+  title: ERP SaaS Comercial API
+  version: 1.0.0
+  description: API REST multi-tenant para gestão comercial e PDV.
+servers:
+  - url: https://api.seu-dominio.com/v1
+security:
+  - bearerAuth: []
+
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Registrar usuário inicial de uma empresa
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Usuário criado
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login com email e senha
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Tokens gerados
+
+  /products:
+    get:
+      tags: [Products]
+      summary: Listar produtos
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lista de produtos
+    post:
+      tags: [Products]
+      summary: Criar produto
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductCreate'
+      responses:
+        '201':
+          description: Produto criado
+
+  /customers:
+    get:
+      tags: [Customers]
+      summary: Listar clientes
+      responses:
+        '200':
+          description: Lista de clientes
+    post:
+      tags: [Customers]
+      summary: Criar cliente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerCreate'
+      responses:
+        '201':
+          description: Cliente criado
+
+  /sales:
+    post:
+      tags: [Sales]
+      summary: Registrar venda PDV
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaleCreate'
+      responses:
+        '201':
+          description: Venda finalizada
+
+  /reports/sales:
+    get:
+      tags: [Reports]
+      summary: Relatório de vendas por período
+      parameters:
+        - in: query
+          name: startDate
+          required: true
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: endDate
+          required: true
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: format
+          schema:
+            type: string
+            enum: [json, csv, pdf, xlsx]
+      responses:
+        '200':
+          description: Relatório gerado
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    RegisterRequest:
+      type: object
+      required: [tenantName, fullName, email, password]
+      properties:
+        tenantName:
+          type: string
+        fullName:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    ProductCreate:
+      type: object
+      required: [name, sku, salePrice]
+      properties:
+        name:
+          type: string
+        sku:
+          type: string
+        barcode:
+          type: string
+        categoryId:
+          type: string
+          format: uuid
+        costPrice:
+          type: number
+        salePrice:
+          type: number
+        stockCurrent:
+          type: number
+
+    CustomerCreate:
+      type: object
+      required: [fullName]
+      properties:
+        fullName:
+          type: string
+        document:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+
+    SaleCreate:
+      type: object
+      required: [items, payments]
+      properties:
+        customerId:
+          type: string
+          format: uuid
+        discountAmount:
+          type: number
+        items:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [productId, quantity, unitPrice]
+            properties:
+              productId:
+                type: string
+                format: uuid
+              quantity:
+                type: number
+              unitPrice:
+                type: number
+        payments:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [method, amount]
+            properties:
+              method:
+                type: string
+                enum: [CASH, PIX, CREDIT_CARD, DEBIT_CARD, MIXED]
+              amount:
+                type: number

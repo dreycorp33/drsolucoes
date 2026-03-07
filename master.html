@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Painel master DR Soluções com módulos e liberação de acesso para empresas." />
+  <title>Controle Master | DR Soluções</title>
+  <style>
+    :root {
+      --bg: #0d1324;
+      --panel: #141d35;
+      --panel-2: #1b2a4d;
+      --text: #e9efff;
+      --muted: #9fb2dd;
+      --primary: #4f8cff;
+      --success: #20c997;
+      --warning: #ffb454;
+      --danger: #ff5e73;
+      --border: #2b3f6f;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Inter, Segoe UI, Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); }
+    .container { width: min(1180px, 94vw); margin: 0 auto; }
+    .muted { color: var(--muted); }
+
+    header { border-bottom: 1px solid #1f2b46; background: rgba(13, 19, 36, 0.95); }
+    .top { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; }
+    .brand { font-weight: 800; }
+
+    .layout { display: grid; grid-template-columns: 260px 1fr; gap: 16px; padding: 18px 0 30px; }
+    .panel { background: linear-gradient(160deg, var(--panel), var(--panel-2)); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+
+    .menu { display: grid; gap: 8px; }
+    .menu button {
+      width: 100%; text-align: left; padding: 10px 12px; border: 1px solid #334a7d; border-radius: 10px;
+      background: #101a31; color: var(--text); cursor: pointer;
+    }
+    .menu button.active, .menu button:hover { background: #1a2d54; border-color: #5a79bf; }
+
+    .section { display: none; }
+    .section.active { display: block; }
+
+    .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
+    .kpi { background: #101a31; border: 1px solid #2a3f6f; border-radius: 10px; padding: 12px; }
+    .kpi strong { display: block; font-size: 1.15rem; margin-bottom: 6px; }
+    .kpi span { color: var(--muted); font-size: .85rem; }
+
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+    label { display: block; font-size: .86rem; color: var(--muted); margin-bottom: 4px; }
+    input, select {
+      width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #395086;
+      background: #0f1830; color: var(--text);
+    }
+
+    .actions { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+    .btn { border: 0; border-radius: 10px; padding: 10px 14px; font-weight: 700; cursor: pointer; }
+    .btn.primary { background: var(--primary); color: #fff; }
+    .btn.success { background: var(--success); color: #fff; }
+    .btn.warning { background: var(--warning); color: #121212; }
+    .btn.danger { background: var(--danger); color: #fff; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    th, td { text-align: left; padding: 9px; border-bottom: 1px solid #2a3b66; font-size: .9rem; vertical-align: top; }
+    th { color: #c6d6ff; }
+
+    .module-card {
+      background: #101a31;
+      border: 1px solid #2b3f71;
+      border-radius: 12px;
+      padding: 12px;
+    }
+    .module-card h4 { margin: 0 0 6px; }
+    .module-card p { margin: 0; color: var(--muted); font-size: .9rem; }
+
+    .checks { display:grid; grid-template-columns:repeat(3, minmax(160px, 1fr)); gap:8px; margin-top:10px; }
+    .checks label { display:flex; gap:8px; align-items:center; background:#101a31; border:1px solid #32497b; padding:8px; border-radius:8px; margin:0; color:#d5e3ff; }
+
+    .login-overlay { position: fixed; inset: 0; background: rgba(3, 8, 18, 0.85); display: grid; place-items: center; }
+    .login-box { width: min(420px, 92vw); }
+
+    .link-output {
+      margin-top: 10px;
+      background: #0d1730;
+      border: 1px dashed #4866ab;
+      border-radius: 10px;
+      padding: 12px;
+      word-break: break-all;
+    }
+
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      .kpis { grid-template-columns: 1fr 1fr; }
+      .grid, .grid-3 { grid-template-columns: 1fr; }
+      .checks { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container top">
+      <div>
+        <div class="brand">DR Soluções • Controle Master</div>
+        <small class="muted">Módulos centrais + liberação de acesso por empresa</small>
+      </div>
+      <a href="index.html" class="muted">← Voltar ao site</a>
+    </div>
+  </header>
+
+  <main class="container layout">
+    <aside class="panel">
+      <h3 style="margin-top:0">Navegação</h3>
+      <div class="menu">
+        <button data-target="visao" class="active">📊 Visão geral</button>
+        <button data-target="modulos">🧩 Todos os módulos</button>
+        <button data-target="empresas">🏢 Empresas</button>
+        <button data-target="liberacao">🔓 Liberação de acesso</button>
+        <button data-target="usuarios">👤 Usuários internos</button>
+        <button data-target="seguranca">🔒 Segurança master</button>
+      </div>
+    </aside>
+
+    <section class="panel">
+      <div id="visao" class="section active">
+        <h2 style="margin-top:0">Visão geral da plataforma</h2>
+        <div class="kpis">
+          <div class="kpi"><strong id="kpiEmpresas">0</strong><span>Empresas ativas</span></div>
+          <div class="kpi"><strong id="kpiUsuarios">0</strong><span>Usuários internos</span></div>
+          <div class="kpi"><strong id="kpiLinks">0</strong><span>Links de acesso gerados</span></div>
+          <div class="kpi"><strong id="kpiModulos">0</strong><span>Módulos liberados</span></div>
+        </div>
+        <p class="muted">Use o menu para cadastrar empresas, definir credenciais e liberar os módulos que cada empresa pode testar.</p>
+      </div>
+
+      <div id="modulos" class="section">
+        <h2 style="margin-top:0">Todos os módulos no usuário master</h2>
+        <p class="muted">Catálogo de módulos disponíveis para liberação às empresas cadastradas.</p>
+        <div class="grid-3" id="moduleCatalog"></div>
+      </div>
+
+      <div id="empresas" class="section">
+        <h2 style="margin-top:0">Cadastro de empresas (com login próprio)</h2>
+        <div class="grid">
+          <div><label>Nome da empresa</label><input id="e_nome" placeholder="Ex: Loja Centro" /></div>
+          <div><label>CNPJ</label><input id="e_cnpj" placeholder="00.000.000/0001-00" /></div>
+          <div><label>Plano</label><select id="e_plano"><option>Starter</option><option>Pro</option><option>Enterprise</option></select></div>
+          <div><label>Status</label><select id="e_status"><option>Ativa</option><option>Suspensa</option></select></div>
+          <div><label>Usuário de acesso da empresa</label><input id="e_user" placeholder="Ex: lojacentro_admin" /></div>
+          <div><label>Senha de acesso da empresa</label><input id="e_pass" type="password" placeholder="Defina a senha" /></div>
+        </div>
+        <div class="actions">
+          <button class="btn success" id="btnSalvarEmpresa">Salvar empresa</button>
+          <button class="btn danger" id="btnLimparEmpresas">Limpar empresas</button>
+        </div>
+        <table>
+          <thead><tr><th>Empresa</th><th>Usuário</th><th>Plano</th><th>Status</th></tr></thead>
+          <tbody id="tbEmpresas"></tbody>
+        </table>
+      </div>
+
+      <div id="liberacao" class="section">
+        <h2 style="margin-top:0">Área de liberação para empresas cadastradas</h2>
+        <div class="grid">
+          <div>
+            <label>Selecione a empresa</label>
+            <select id="l_empresa"></select>
+          </div>
+          <div>
+            <label>Ambiente</label>
+            <select id="l_env">
+              <option value="teste">Teste</option>
+              <option value="homolog">Homologação</option>
+              <option value="producao">Produção</option>
+            </select>
+          </div>
+        </div>
+        <p class="muted">Escolha os módulos liberados para essa empresa:</p>
+        <div class="checks" id="moduleChecks"></div>
+        <div class="actions">
+          <button class="btn primary" id="btnGerarLink">Gerar link de acesso</button>
+        </div>
+        <div class="link-output" id="linkOutput">Nenhum link gerado ainda.</div>
+
+        <table>
+          <thead><tr><th>Empresa</th><th>Usuário</th><th>Módulos</th><th>Link</th></tr></thead>
+          <tbody id="tbLiberacoes"></tbody>
+        </table>
+      </div>
+
+      <div id="usuarios" class="section">
+        <h2 style="margin-top:0">Usuários internos (master)</h2>
+        <div class="grid">
+          <div><label>Nome</label><input id="u_nome" placeholder="Ex: Ana Silva" /></div>
+          <div><label>E-mail</label><input id="u_email" placeholder="ana@drsolucoes.com" /></div>
+          <div><label>Perfil</label>
+            <select id="u_perfil"><option>Administrador</option><option>Gerente</option><option>Financeiro</option><option>Suporte</option></select>
+          </div>
+          <div><label>Status</label><select id="u_status"><option>Ativo</option><option>Inativo</option></select></div>
+        </div>
+        <div class="actions">
+          <button class="btn primary" id="btnSalvarUsuario">Salvar usuário</button>
+          <button class="btn danger" id="btnLimparUsuarios">Limpar usuários</button>
+        </div>
+        <table>
+          <thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Status</th></tr></thead>
+          <tbody id="tbUsuarios"></tbody>
+        </table>
+      </div>
+
+      <div id="seguranca" class="section">
+        <h2 style="margin-top:0">Segurança master</h2>
+        <p class="muted">Altere a senha do usuário master de administração.</p>
+        <div class="grid">
+          <div><label>Senha atual</label><input id="s_atual" type="password" /></div>
+          <div><label>Nova senha</label><input id="s_nova" type="password" /></div>
+        </div>
+        <div class="actions"><button class="btn warning" id="btnTrocarSenha">Atualizar senha master</button></div>
+      </div>
+    </section>
+  </main>
+
+  <div class="login-overlay" id="loginOverlay">
+    <div class="panel login-box">
+      <h2 style="margin-top:0">Login Master</h2>
+      <p class="muted">Acesso exclusivo ao painel de controle.</p>
+      <label>Usuário</label>
+      <input id="loginUser" value="master" />
+      <label style="margin-top:8px">Senha</label>
+      <input id="loginPass" type="password" placeholder="Digite sua senha" />
+      <div class="actions"><button class="btn primary" id="btnEntrar">Entrar</button></div>
+      <small class="muted">Senha padrão inicial: <strong>master123</strong></small>
+    </div>
+  </div>
+
+  <script>
+    const MODULES = [
+      'Dashboard', 'PDV', 'Produtos', 'Clientes', 'Estoque', 'Financeiro',
+      'Relatórios', 'Controle de Caixa', 'Impressão', 'Configurações',
+      'Billing', 'Website Institucional', 'Backup/Restauração', 'API REST'
+    ];
+
+    const STORE = {
+      pass: 'dr_master_password',
+      users: 'dr_master_users',
+      companies: 'dr_master_companies',
+      releases: 'dr_master_releases'
+    };
+
+    if (!localStorage.getItem(STORE.pass)) localStorage.setItem(STORE.pass, 'master123');
+
+    const getJSON = (key, fallback = []) => {
+      try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
+      catch { return fallback; }
+    };
+    const setJSON = (key, val) => localStorage.setItem(key, JSON.stringify(val));
+
+    const users = () => getJSON(STORE.users, []);
+    const companies = () => getJSON(STORE.companies, []);
+    const releases = () => getJSON(STORE.releases, []);
+
+    function slug(text) {
+      return (text || '').toLowerCase().normalize('NFD').replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
+    }
+
+    function moduleCatalog() {
+      document.getElementById('moduleCatalog').innerHTML = MODULES.map(m =>
+        `<article class="module-card"><h4>${m}</h4><p>Módulo disponível para liberação por empresa no painel master.</p></article>`
+      ).join('');
+
+      document.getElementById('moduleChecks').innerHTML = MODULES.map(m =>
+        `<label><input type="checkbox" class="mod-check" value="${m}" checked /> ${m}</label>`
+      ).join('');
+    }
+
+    function renderUsers() {
+      const rows = users().map(u => `<tr><td>${u.nome}</td><td>${u.email}</td><td>${u.perfil}</td><td>${u.status}</td></tr>`).join('');
+      document.getElementById('tbUsuarios').innerHTML = rows || '<tr><td colspan="4" class="muted">Sem usuários internos.</td></tr>';
+      document.getElementById('kpiUsuarios').textContent = users().length;
+    }
+
+    function renderCompanies() {
+      const rows = companies().map(c => `<tr><td>${c.nome}</td><td>${c.loginUser}</td><td>${c.plano}</td><td>${c.status}</td></tr>`).join('');
+      document.getElementById('tbEmpresas').innerHTML = rows || '<tr><td colspan="4" class="muted">Sem empresas cadastradas.</td></tr>';
+
+      const opts = companies().map(c => `<option value="${c.id}">${c.nome} (${c.loginUser})</option>`).join('');
+      document.getElementById('l_empresa').innerHTML = opts || '<option value="">Nenhuma empresa</option>';
+
+      document.getElementById('kpiEmpresas').textContent = companies().filter(c => c.status === 'Ativa').length;
+    }
+
+    function renderReleases() {
+      const data = releases();
+      const rows = data.map(r => `<tr>
+        <td>${r.companyName}</td>
+        <td>${r.loginUser}</td>
+        <td>${r.modules.join(', ')}</td>
+        <td><a href="${r.link}" target="_blank" class="muted">Abrir link</a></td>
+      </tr>`).join('');
+      document.getElementById('tbLiberacoes').innerHTML = rows || '<tr><td colspan="4" class="muted">Nenhuma liberação gerada.</td></tr>';
+      document.getElementById('kpiLinks').textContent = data.length;
+      document.getElementById('kpiModulos').textContent = data.reduce((a, b) => a + b.modules.length, 0);
+    }
+
+    function initMenu() {
+      document.querySelectorAll('.menu button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.menu button').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const target = btn.dataset.target;
+          document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+          document.getElementById(target).classList.add('active');
+        });
+      });
+    }
+
+    document.getElementById('btnSalvarEmpresa').addEventListener('click', () => {
+      const nome = document.getElementById('e_nome').value.trim();
+      const cnpj = document.getElementById('e_cnpj').value.trim();
+      const plano = document.getElementById('e_plano').value;
+      const status = document.getElementById('e_status').value;
+      const loginUser = document.getElementById('e_user').value.trim();
+      const loginPass = document.getElementById('e_pass').value;
+
+      if (!nome || !loginUser || !loginPass) return alert('Preencha empresa, usuário e senha da empresa.');
+
+      const data = companies();
+      data.push({
+        id: Date.now().toString(),
+        nome, cnpj, plano, status,
+        loginUser, loginPass
+      });
+      setJSON(STORE.companies, data);
+
+      ['e_nome','e_cnpj','e_user','e_pass'].forEach(id => document.getElementById(id).value = '');
+      renderCompanies();
+      alert('Empresa cadastrada com credenciais próprias.');
+    });
+
+    document.getElementById('btnLimparEmpresas').addEventListener('click', () => {
+      if (!confirm('Deseja remover todas as empresas cadastradas?')) return;
+      setJSON(STORE.companies, []);
+      setJSON(STORE.releases, []);
+      renderCompanies();
+      renderReleases();
+    });
+
+    document.getElementById('btnGerarLink').addEventListener('click', () => {
+      const companyId = document.getElementById('l_empresa').value;
+      const env = document.getElementById('l_env').value;
+      const mods = [...document.querySelectorAll('.mod-check:checked')].map(i => i.value);
+      if (!companyId) return alert('Cadastre e selecione uma empresa.');
+      if (mods.length === 0) return alert('Selecione ao menos 1 módulo para liberar.');
+
+      const company = companies().find(c => c.id === companyId);
+      if (!company) return alert('Empresa inválida.');
+
+      const token = btoa(`${company.id}:${company.loginUser}:${Date.now()}`);
+      const link = `${location.origin}${location.pathname.replace('master.html','tenant.html')}?cid=${encodeURIComponent(company.id)}&env=${env}&t=${encodeURIComponent(token)}`;
+
+      const data = releases();
+      const release = {
+        id: Date.now().toString(),
+        companyId: company.id,
+        companyName: company.nome,
+        loginUser: company.loginUser,
+        modules: mods,
+        env,
+        token,
+        link
+      };
+
+      const idx = data.findIndex(r => r.companyId === company.id);
+      if (idx >= 0) data[idx] = release; else data.push(release);
+      setJSON(STORE.releases, data);
+
+      document.getElementById('linkOutput').innerHTML = `
+        <strong>Link gerado com sucesso:</strong><br/>
+        ${link}<br/><br/>
+        <strong>Login para teste:</strong> ${company.loginUser}<br/>
+        <strong>Senha para teste:</strong> ${company.loginPass}
+      `;
+
+      renderReleases();
+    });
+
+    document.getElementById('btnSalvarUsuario').addEventListener('click', () => {
+      const nome = document.getElementById('u_nome').value.trim();
+      const email = document.getElementById('u_email').value.trim();
+      const perfil = document.getElementById('u_perfil').value;
+      const status = document.getElementById('u_status').value;
+      if (!nome || !email) return alert('Informe nome e e-mail.');
+
+      const data = users();
+      data.push({ nome, email, perfil, status });
+      setJSON(STORE.users, data);
+      ['u_nome', 'u_email'].forEach(id => document.getElementById(id).value = '');
+      renderUsers();
+    });
+
+    document.getElementById('btnLimparUsuarios').addEventListener('click', () => {
+      if (!confirm('Deseja remover todos os usuários internos?')) return;
+      setJSON(STORE.users, []);
+      renderUsers();
+    });
+
+    document.getElementById('btnTrocarSenha').addEventListener('click', () => {
+      const atual = document.getElementById('s_atual').value;
+      const nova = document.getElementById('s_nova').value;
+      const saved = localStorage.getItem(STORE.pass);
+      if (atual !== saved) return alert('Senha atual inválida.');
+      if (!nova || nova.length < 6) return alert('Nova senha deve ter ao menos 6 caracteres.');
+      localStorage.setItem(STORE.pass, nova);
+      document.getElementById('s_atual').value = '';
+      document.getElementById('s_nova').value = '';
+      alert('Senha master atualizada com sucesso.');
+    });
+
+    document.getElementById('btnEntrar').addEventListener('click', () => {
+      const u = document.getElementById('loginUser').value.trim();
+      const p = document.getElementById('loginPass').value;
+      const saved = localStorage.getItem(STORE.pass);
+      if (u !== 'master' || p !== saved) return alert('Credenciais inválidas.');
+      document.getElementById('loginOverlay').style.display = 'none';
+      moduleCatalog();
+      renderUsers();
+      renderCompanies();
+      renderReleases();
+      initMenu();
+    });
+  </script>
+</body>
+</html>

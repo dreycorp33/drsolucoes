@@ -1,29 +1,64 @@
-# Império Morangos - Site para GitHub Pages
+# DR Soluções — Site institucional (GitHub Pages)
 
-Esta é a versão estática (front-end) da aplicação "Império Morangos" preparada para publicar com GitHub Pages.
+Este repositório publica um site institucional estático da solução ERP SaaS Comercial + PDV.
 
-O repositório contém:
-- `index.html` — aplicação completa (HTML/CSS/JS).
-- `.nojekyll` — evita que o GitHub Pages processe com Jekyll (útil para arquivos que começam com `_`).
-- `README.md` — instruções.
+## Arquivos principais
 
-Como publicar (opções):
+- `index.html` — página institucional responsiva pronta para publicação.
+- `master.html` — painel de controle do usuário master (módulos, cadastro de empresas, liberação de acesso e geração de links).
+- `tenant.html` — ambiente de teste das empresas, acessado por link gerado no master.
+- `app.html` — página com módulos funcionais para uso (dashboard, clientes, produtos, PDV touch mais fluido, financeiro e relatórios).
+- `empresa-ativa.html` — subpágina real exclusiva para empresa ativa, com resumo do tenant e módulos liberados.
+- `erp-completo.html` — HTML único completo com todas as funções principais do ERP/PDV (cadastros, vendas, estoque, financeiro, caixa, relatórios, configurações e backup).
+- `.nojekyll` — garante publicação estática no GitHub Pages sem processamento Jekyll.
+- `docs/` — documentação técnica (arquitetura, schema e API) para evolução do produto.
 
-Opção A — Usando um repositório normal (URL ficará: `https://<usuario>.github.io/<repo>`):
-1. Faça push dos arquivos para a branch `main` (já tratado).
-2. No GitHub (Settings → Pages) selecione:
-   - Branch: `main` e diretório `/ (root)`
-   - Salve — o site ficará disponível em `https://<usuario>.github.io/<repo>` em alguns minutos.
+## Fluxo de liberação por empresa
 
-Opção B — Site no domínio root `https://<usuario>.github.io` (se quiser sem `/repo`):
-1. Crie/renomeie o repositório para exatamente: `<usuario>.github.io`.
-2. Faça o push dos arquivos para a branch `main`.
-3. O site ficará disponível em `https://<usuario>.github.io` imediatamente (após publicação).
+1. Acesse `master.html`.
+2. Faça login master (`master` / `master123`, alterável no painel).
+3. Cadastre a empresa com usuário e senha próprios.
+4. Vá em **Liberação de acesso**, selecione a empresa e os módulos.
+5. Clique em **Gerar link de acesso**.
+6. Compartilhe o link com a empresa para ela testar os módulos em `tenant.html` com as credenciais definidas no master.
+7. Após login no tenant, clique em **Abrir módulos funcionais** para usar o sistema em `app.html`.
+8. Opcional: clique em **Abrir subpágina empresa ativa** para abrir `empresa-ativa.html` com contexto do tenant ativo.
 
-Observações:
-- A aplicação usa localStorage para dados locais; o backup/restore é feito por arquivo `.json`.
-- A app usa jsPDF via CDN para gerar relatórios em PDF — funciona no GitHub Pages.
-- Se quiser custom domain (ex: meu-dominio.com), adicione um arquivo `CNAME` com o domínio e configure DNS conforme a documentação do GitHub Pages.
-- Posso automatizar o deploy (GitHub Actions) ou criar o repositório e enviar os arquivos para você — me diga se quer CI/CD ou separação de assets.
+## Publicar no GitHub Pages
 
-Se quiser separar CSS/JS em arquivos próprios (melhor organização), eu posso adicionar a estrutura `assets/css` e `assets/js`.
+### Opção A — projeto em subpasta
+URL final: `https://<usuario>.github.io/<repo>`
+
+1. Faça push da branch `main`.
+2. No GitHub: **Settings → Pages**.
+3. Em **Build and deployment**, escolha **Deploy from a branch**.
+4. Selecione **main** e pasta **/(root)**.
+5. Salve e aguarde a publicação.
+
+### Opção B — domínio raiz do usuário
+URL final: `https://<usuario>.github.io`
+
+1. Renomeie o repositório para `<usuario>.github.io`.
+2. Faça push da branch `main`.
+3. O site passa a servir no domínio raiz do usuário.
+
+
+## ERP completo em um único HTML
+
+- Abra `erp-completo.html` para usar o sistema completo em formato single-file.
+- Fluxo recomendado: cadastre empresa/admin em **Auth**, faça login e use os módulos pelo menu lateral.
+
+
+## Servidor virtual no GitHub (persistência remota)
+
+No arquivo `erp-completo.html` existe o módulo **Servidor GitHub** para salvar todos os dados do sistema em um repositório GitHub (arquivo JSON remoto).
+
+Fluxo:
+1. Preencha `owner`, `repo`, `branch`, `path` e `token` (escopo `repo`).
+2. Clique em **Salvar configuração cloud**.
+3. Clique em **Enviar dados para GitHub** para persistir todo o banco (incluindo empresas, personalizações e login/senha).
+4. Use **Carregar dados do GitHub** para restaurar os dados remotos no sistema.
+
+## Personalização por empresa
+
+No módulo **Personalização** do `erp-completo.html`, cada empresa salva identidade própria: nome, CNPJ, telefone, endereço, tema, cor primária, logo e slogan.

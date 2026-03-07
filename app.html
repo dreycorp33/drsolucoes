@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Módulos funcionais DR Soluções para uso da empresa." />
+  <title>Módulos Funcionais | DR Soluções</title>
+  <style>
+    :root { --bg:#0b1220; --panel:#111b33; --panel2:#1a2b4f; --border:#2c4374; --text:#ebf1ff; --muted:#9eb3df; --pri:#4f8cff; --ok:#20c997; --warn:#ffb454; --danger:#ff5e73; }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
+    .container{width:min(1180px,94vw);margin:0 auto}
+    header{border-bottom:1px solid #1f2b46;background:rgba(11,18,32,.95)}
+    .top{display:flex;justify-content:space-between;align-items:center;padding:14px 0;gap:10px;flex-wrap:wrap}
+    .layout{display:grid;grid-template-columns:230px 1fr;gap:14px;padding:16px 0 28px}
+    .panel{background:linear-gradient(160deg,var(--panel),var(--panel2));border:1px solid var(--border);border-radius:12px;padding:14px}
+    .menu{display:grid;gap:8px}
+    .menu button{padding:12px;border-radius:10px;border:1px solid #36528b;background:#0f1a32;color:var(--text);text-align:left;cursor:pointer;font-weight:700;min-height:46px}
+    .menu button.active,.menu button:hover{background:#172a52}
+    .section{display:none}.section.active{display:block}
+    .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+    .kpi{background:#0f1a33;border:1px solid #2f4679;border-radius:10px;padding:10px}
+    .kpi strong{display:block;font-size:1.1rem}
+    .kpi span{color:var(--muted);font-size:.85rem}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    label{display:block;color:var(--muted);font-size:.85rem;margin-bottom:4px}
+    input,select{width:100%;padding:12px;border-radius:8px;border:1px solid #38518a;background:#0f1830;color:var(--text);font-size:1rem;min-height:46px}
+    .btn{border:0;border-radius:10px;padding:12px 14px;font-weight:800;cursor:pointer;min-height:46px}
+    .btn.pri{background:var(--pri);color:#fff}.btn.ok{background:var(--ok);color:#fff}.btn.warn{background:var(--warn);color:#111}.btn.danger{background:var(--danger);color:#fff}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    table{width:100%;border-collapse:collapse;margin-top:10px}
+    th,td{padding:9px;border-bottom:1px solid #2b3f6e;font-size:.9rem;text-align:left}
+    th{color:#c6d6ff}
+    .muted{color:var(--muted)}
+
+    .touch-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+    .touch-btn{border:1px solid #4062a1;background:#102042;color:#fff;border-radius:12px;padding:14px;font-size:1rem;font-weight:800;min-height:56px}
+    .pdv-total{display:flex;justify-content:space-between;align-items:center;background:#0f1a33;border:1px solid #2f4679;border-radius:10px;padding:12px;margin-top:10px}
+    .pdv-total strong{font-size:1.3rem}
+
+    .sticky-action{position:sticky;bottom:8px;background:linear-gradient(160deg,var(--panel),var(--panel2));padding:8px;border-radius:12px;border:1px solid var(--border)}
+
+    @media(max-width:980px){
+      .layout{grid-template-columns:1fr}
+      .kpis{grid-template-columns:1fr 1fr}
+      .grid{grid-template-columns:1fr}
+      .touch-bar{grid-template-columns:1fr 1fr}
+      .btn{width:100%}
+      .actions{display:grid;grid-template-columns:1fr 1fr}
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="container top">
+    <div><strong id="brand">Empresa</strong><div class="muted" id="env"></div></div>
+    <div class="actions" style="margin:0">
+      <button class="btn warn" id="btnSubPagina">Subpágina empresa ativa</button>
+      <a href="index.html" class="muted">Sair</a>
+    </div>
+  </div>
+</header>
+
+<main class="container layout">
+  <aside class="panel">
+    <h3 style="margin-top:0">Módulos</h3>
+    <div class="menu" id="menu"></div>
+  </aside>
+
+  <section class="panel">
+    <div id="sec-dashboard" class="section active">
+      <h2 style="margin-top:0">Dashboard</h2>
+      <div class="kpis">
+        <div class="kpi"><strong id="kpiCli">0</strong><span>Clientes</span></div>
+        <div class="kpi"><strong id="kpiPro">0</strong><span>Produtos</span></div>
+        <div class="kpi"><strong id="kpiVen">R$ 0,00</strong><span>Vendas</span></div>
+        <div class="kpi"><strong id="kpiFin">R$ 0,00</strong><span>Saldo financeiro</span></div>
+      </div>
+    </div>
+
+    <div id="sec-Clientes" class="section">
+      <h2 style="margin-top:0">Clientes</h2>
+      <div class="grid">
+        <div><label>Nome</label><input id="c_nome" /></div>
+        <div><label>Telefone</label><input id="c_fone" /></div>
+      </div>
+      <div class="actions"><button class="btn ok" id="btnCAdd">Salvar cliente</button></div>
+      <table><thead><tr><th>Nome</th><th>Telefone</th></tr></thead><tbody id="tbCli"></tbody></table>
+    </div>
+
+    <div id="sec-Produtos" class="section">
+      <h2 style="margin-top:0">Produtos</h2>
+      <div class="grid">
+        <div><label>Nome</label><input id="p_nome" /></div>
+        <div><label>Preço</label><input id="p_preco" type="number" step="0.01" min="0" /></div>
+      </div>
+      <div class="actions"><button class="btn ok" id="btnPAdd">Salvar produto</button></div>
+      <table><thead><tr><th>Nome</th><th>Preço</th></tr></thead><tbody id="tbPro"></tbody></table>
+    </div>
+
+    <div id="sec-PDV" class="section">
+      <h2 style="margin-top:0">PDV / Vendas (Touch)</h2>
+      <div class="grid">
+        <div><label>Cliente (opcional)</label><select id="v_cli"></select></div>
+        <div><label>Produto</label><select id="v_pro"></select></div>
+        <div><label>Quantidade</label><input id="v_qtd" type="number" min="1" value="1" /></div>
+        <div><label>Pagamento</label><select id="v_pag"><option>Dinheiro</option><option>PIX</option><option>Cartão crédito</option><option>Cartão débito</option></select></div>
+      </div>
+
+      <div class="touch-bar">
+        <button class="touch-btn" id="btnQtdMenos">-1</button>
+        <button class="touch-btn" id="btnQtdMais">+1</button>
+        <button class="touch-btn" id="btnAddRapido">Adicionar rápido</button>
+        <button class="touch-btn" id="btnPixRapido">Venda PIX rápida</button>
+      </div>
+
+      <div class="pdv-total"><span class="muted">Total estimado item:</span><strong id="pdvPreview">R$ 0,00</strong></div>
+
+      <div class="sticky-action">
+        <div class="actions"><button class="btn pri" id="btnVenda">Registrar venda</button><button class="btn danger" id="btnLimparVenda">Limpar campos</button></div>
+      </div>
+
+      <table><thead><tr><th>Data</th><th>Cliente</th><th>Produto</th><th>Qtd</th><th>Total</th><th>Pagamento</th></tr></thead><tbody id="tbVen"></tbody></table>
+    </div>
+
+    <div id="sec-Financeiro" class="section">
+      <h2 style="margin-top:0">Financeiro</h2>
+      <div class="grid">
+        <div><label>Tipo</label><select id="f_tipo"><option>Receita</option><option>Despesa</option></select></div>
+        <div><label>Valor</label><input id="f_valor" type="number" step="0.01" min="0" /></div>
+        <div><label>Descrição</label><input id="f_desc" /></div>
+      </div>
+      <div class="actions"><button class="btn warn" id="btnFin">Lançar</button></div>
+      <table><thead><tr><th>Tipo</th><th>Descrição</th><th>Valor</th></tr></thead><tbody id="tbFin"></tbody></table>
+    </div>
+
+    <div id="sec-Relatórios" class="section">
+      <h2 style="margin-top:0">Relatórios</h2>
+      <p class="muted">Resumo consolidado dos dados do ambiente.</p>
+      <table><tbody id="tbRep"></tbody></table>
+    </div>
+  </section>
+</main>
+
+<script>
+const STORE = { companies:'dr_master_companies', releases:'dr_master_releases' };
+const getJSON=(k,f=[])=>{try{return JSON.parse(localStorage.getItem(k))??f}catch{return f}};
+const br=n=>Number(n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+
+const params=new URLSearchParams(location.search);
+const cid=params.get('cid');
+const token=params.get('t');
+
+const companies=getJSON(STORE.companies,[]);
+const releases=getJSON(STORE.releases,[]);
+const company=companies.find(c=>c.id===cid);
+const release=releases.find(r=>r.companyId===cid && r.token===token);
+
+if(!company||!release||company.status!=='Ativa'){
+  document.body.innerHTML='<div style="padding:20px;color:#fff">Acesso inválido ou empresa não ativa. Solicite nova liberação no master.</div>';
+  throw new Error('invalid access');
+}
+
+const KEY=`dr_tenant_data_${company.id}`;
+const data=getJSON(KEY,{clientes:[],produtos:[],vendas:[],financeiro:[]});
+const save=()=>localStorage.setItem(KEY,JSON.stringify(data));
+
+const moduleMap={'Dashboard':'dashboard','Clientes':'Clientes','Produtos':'Produtos','PDV':'PDV','Financeiro':'Financeiro','Relatórios':'Relatórios'};
+const allowed=release.modules.filter(m=>moduleMap[m]);
+
+document.getElementById('brand').textContent=`${company.nome} (${company.loginUser})`;
+document.getElementById('env').textContent=`Ambiente: ${release.env} • Status empresa: ${company.status}`;
+document.getElementById('btnSubPagina').onclick=()=>location.href=`empresa-ativa.html?cid=${encodeURIComponent(cid)}&t=${encodeURIComponent(token)}`;
+
+const menu=document.getElementById('menu');
+menu.innerHTML=allowed.map((m,i)=>`<button data-sec="${moduleMap[m]}" class="${i===0?'active':''}">${m}</button>`).join('') || '<span class="muted">Sem módulos liberados.</span>';
+
+const show=(sec)=>{document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));const id=sec==='dashboard'?'sec-dashboard':`sec-${sec}`;const el=document.getElementById(id);if(el)el.classList.add('active');document.querySelectorAll('.menu button').forEach(b=>b.classList.toggle('active',b.dataset.sec===sec));};
+menu.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>show(b.dataset.sec)));
+
+function pdvPreview(){
+  const produtoNome=document.getElementById('v_pro').value;
+  const qtd=Number(document.getElementById('v_qtd').value||1);
+  const p=data.produtos.find(x=>x.nome===produtoNome);
+  const total=p?Number((p.preco*qtd).toFixed(2)):0;
+  document.getElementById('pdvPreview').textContent=br(total);
+}
+
+function renderAll(){
+  document.getElementById('tbCli').innerHTML=data.clientes.map(c=>`<tr><td>${c.nome}</td><td>${c.fone||''}</td></tr>`).join('')||'<tr><td colspan="2" class="muted">Sem clientes</td></tr>';
+  document.getElementById('tbPro').innerHTML=data.produtos.map(p=>`<tr><td>${p.nome}</td><td>${br(p.preco)}</td></tr>`).join('')||'<tr><td colspan="2" class="muted">Sem produtos</td></tr>';
+  document.getElementById('tbVen').innerHTML=data.vendas.slice().reverse().map(v=>`<tr><td>${new Date(v.data).toLocaleString('pt-BR')}</td><td>${v.cliente||'-'}</td><td>${v.produto}</td><td>${v.qtd}</td><td>${br(v.total)}</td><td>${v.pag}</td></tr>`).join('')||'<tr><td colspan="6" class="muted">Sem vendas</td></tr>';
+  document.getElementById('tbFin').innerHTML=data.financeiro.slice().reverse().map(f=>`<tr><td>${f.tipo}</td><td>${f.desc||'-'}</td><td>${br(f.valor)}</td></tr>`).join('')||'<tr><td colspan="3" class="muted">Sem lançamentos</td></tr>';
+
+  document.getElementById('kpiCli').textContent=data.clientes.length;
+  document.getElementById('kpiPro').textContent=data.produtos.length;
+  const totalVendas=data.vendas.reduce((a,b)=>a+Number(b.total||0),0);
+  document.getElementById('kpiVen').textContent=br(totalVendas);
+  const saldo=data.financeiro.reduce((a,f)=>a+(f.tipo==='Receita'?Number(f.valor):-(Number(f.valor))),0)+totalVendas;
+  document.getElementById('kpiFin').textContent=br(saldo);
+
+  const cliSel=document.getElementById('v_cli');
+  cliSel.innerHTML='<option value="">Sem cliente</option>'+data.clientes.map(c=>`<option>${c.nome}</option>`).join('');
+  const proSel=document.getElementById('v_pro');
+  proSel.innerHTML=data.produtos.map(p=>`<option value="${p.nome}">${p.nome} - ${br(p.preco)}</option>`).join('');
+
+  document.getElementById('tbRep').innerHTML=`
+    <tr><th>Total de clientes</th><td>${data.clientes.length}</td></tr>
+    <tr><th>Total de produtos</th><td>${data.produtos.length}</td></tr>
+    <tr><th>Total de vendas</th><td>${data.vendas.length} (${br(totalVendas)})</td></tr>
+    <tr><th>Lançamentos financeiros</th><td>${data.financeiro.length}</td></tr>
+    <tr><th>Módulos liberados</th><td>${allowed.join(', ')||'Nenhum'}</td></tr>
+  `;
+  pdvPreview();
+}
+
+document.getElementById('btnCAdd')?.addEventListener('click',()=>{const nome=document.getElementById('c_nome').value.trim();const fone=document.getElementById('c_fone').value.trim();if(!nome)return alert('Informe nome');data.clientes.push({nome,fone});save();document.getElementById('c_nome').value='';document.getElementById('c_fone').value='';renderAll();});
+document.getElementById('btnPAdd')?.addEventListener('click',()=>{const nome=document.getElementById('p_nome').value.trim();const preco=Number(document.getElementById('p_preco').value||0);if(!nome||preco<=0)return alert('Informe nome e preço válido');data.produtos.push({nome,preco});save();document.getElementById('p_nome').value='';document.getElementById('p_preco').value='';renderAll();});
+
+document.getElementById('btnQtdMenos').onclick=()=>{const el=document.getElementById('v_qtd');el.value=Math.max(1,Number(el.value||1)-1);pdvPreview();};
+document.getElementById('btnQtdMais').onclick=()=>{const el=document.getElementById('v_qtd');el.value=Number(el.value||1)+1;pdvPreview();};
+document.getElementById('btnAddRapido').onclick=()=>document.getElementById('btnVenda').click();
+document.getElementById('btnPixRapido').onclick=()=>{document.getElementById('v_pag').value='PIX';document.getElementById('btnVenda').click();};
+document.getElementById('v_pro').addEventListener('change',pdvPreview);
+document.getElementById('v_qtd').addEventListener('input',pdvPreview);
+
+document.getElementById('btnVenda')?.addEventListener('click',()=>{const produtoNome=document.getElementById('v_pro').value;const qtd=Number(document.getElementById('v_qtd').value||1);const pag=document.getElementById('v_pag').value;const cliente=document.getElementById('v_cli').value;const p=data.produtos.find(x=>x.nome===produtoNome);if(!p)return alert('Cadastre produto primeiro');if(qtd<=0)return alert('Qtd inválida');data.vendas.push({data:new Date().toISOString(),cliente,produto:produtoNome,qtd,total:Number((p.preco*qtd).toFixed(2)),pag});save();renderAll();});
+document.getElementById('btnLimparVenda').onclick=()=>{document.getElementById('v_qtd').value=1;document.getElementById('v_cli').value='';document.getElementById('v_pag').value='Dinheiro';pdvPreview();};
+
+document.getElementById('btnFin')?.addEventListener('click',()=>{const tipo=document.getElementById('f_tipo').value;const valor=Number(document.getElementById('f_valor').value||0);const desc=document.getElementById('f_desc').value.trim();if(valor<=0)return alert('Valor inválido');data.financeiro.push({tipo,valor,desc});save();document.getElementById('f_valor').value='';document.getElementById('f_desc').value='';renderAll();});
+
+renderAll();
+</script>
+</body>
+</html>

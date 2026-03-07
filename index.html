@@ -1,329 +1,229 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Império Morangos - Gestão Profissional</title>
-
-  <!-- jsPDF e AutoTable (CDN) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="DR Soluções - ERP Comercial SaaS com PDV, estoque, financeiro, relatórios e gestão multiempresa." />
+  <title>DR Soluções | ERP SaaS Comercial com PDV</title>
   <style>
-    :root { --primary: #d32f2f; --secondary: #2980b9; --success: #27ae60; --warning: #f39c12; --danger: #eb4d4b; --bg: #fff5f5; }
-    body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 20px; font-size: 13px; }
-    .container { max-width: 1350px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); border-top: 5px solid var(--primary); display: grid; grid-template-columns: 350px 1fr; gap: 20px; }
-    .top-bar { grid-column: span 2; background: #2d3436; color: white; padding: 12px 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-    .dash { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; grid-column: span 2; }
-    .card { padding: 15px; border-radius: 8px; color: white; }
-    .card-vendas { background: var(--success); }
-    .card-recebido { background: var(--secondary); }
-    .card-pendente { background: var(--warning); }
-    .card-val { font-size: 24px; font-weight: bold; display: block; margin-top: 5px; }
-    .list-box { background: #f9f9f9; border: 1px solid #eee; border-radius: 8px; max-height: 180px; overflow-y: auto; margin: 10px 0; }
-    .item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee; align-items: center; }
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; }
-    th { background: #f1f2f6; padding: 12px; text-align: left; }
-    td { padding: 10px; border-bottom: 1px solid #eee; }
-    .status-pago { color: var(--success); font-weight: bold; }
-    .status-aberto { color: var(--danger); font-weight: bold; }
-    button { border: none; border-radius: 6px; cursor: pointer; font-weight: bold; padding: 10px; }
-    .btn-del { background: var(--danger); color: white; padding: 5px 8px; font-size: 11px; margin-left: 5px; }
-    .btn-quitar { background: var(--success); color: white; padding: 5px 8px; font-size: 11px; }
-    input, select { padding: 8px; border: 1px solid #ddd; border-radius: 6px; width: 100%; box-sizing: border-box; margin-bottom: 5px; }
-    #cupom { display: none; width: 72mm; padding: 10px; font-family: 'Courier New', monospace; }
-    @media print { body * { visibility: hidden; } #cupom, #cupom * { visibility: visible; } #cupom { display: block; position: absolute; left: 0; top: 0; } }
+    :root {
+      --bg: #0b1220;
+      --panel: #121b2e;
+      --panel-2: #1a2742;
+      --text: #e8eefc;
+      --muted: #a9b8dd;
+      --primary: #4f8cff;
+      --secondary: #20c997;
+      --warning: #ffb454;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; font-family: Inter, Segoe UI, Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); }
+    a { color: inherit; text-decoration: none; }
+
+    .container { width: min(1120px, 92vw); margin: 0 auto; }
+    .btn {
+      display: inline-block;
+      background: var(--primary);
+      color: #fff;
+      padding: 12px 18px;
+      border-radius: 10px;
+      font-weight: 700;
+      transition: .2s ease;
+    }
+    .btn:hover { transform: translateY(-1px); filter: brightness(1.05); }
+    .btn.secondary { background: transparent; border: 1px solid #3b4b73; color: var(--muted); }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(8px);
+      background: rgba(11, 18, 32, 0.85);
+      border-bottom: 1px solid #1f2b46;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 0;
+    }
+
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; }
+    .logo {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: linear-gradient(130deg, var(--primary), var(--secondary));
+      box-shadow: 0 6px 20px rgba(79, 140, 255, .35);
+    }
+
+    .hero {
+      padding: 76px 0 46px;
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 30px;
+      align-items: center;
+    }
+
+    h1 { margin: 0 0 16px; font-size: clamp(2rem, 5vw, 3rem); line-height: 1.08; }
+    .lead { color: var(--muted); font-size: 1.05rem; line-height: 1.6; margin-bottom: 24px; }
+
+    .hero-card {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid #233254;
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: 0 12px 36px rgba(0,0,0,.35);
+    }
+
+    .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+    .kpi {
+      background: #0f1729;
+      border: 1px solid #223250;
+      border-radius: 12px;
+      padding: 14px;
+    }
+    .kpi strong { display:block; font-size: 1.2rem; margin-bottom: 4px; }
+    .kpi span { color: var(--muted); font-size: .9rem; }
+
+    section { padding: 34px 0; }
+    .title { font-size: 1.7rem; margin: 0 0 14px; }
+    .subtitle { color: var(--muted); margin: 0 0 24px; }
+
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .card {
+      background: #111a2f;
+      border: 1px solid #24355b;
+      border-radius: 14px;
+      padding: 16px;
+    }
+    .card h3 { margin: 0 0 8px; font-size: 1.06rem; }
+    .card p { margin: 0; color: var(--muted); line-height: 1.55; }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: .78rem;
+      margin-bottom: 10px;
+      background: rgba(79,140,255,.15);
+      border: 1px solid rgba(79,140,255,.35);
+      color: #c6dbff;
+    }
+
+    .stack { display: flex; flex-wrap: wrap; gap: 10px; }
+    .pill {
+      background: #0f1729;
+      border: 1px solid #27385f;
+      color: #bdd0ff;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: .88rem;
+    }
+
+    .cta {
+      background: linear-gradient(140deg, #131f38, #16284f);
+      border: 1px solid #2a3f71;
+      border-radius: 18px;
+      padding: 26px;
+      display: flex;
+      gap: 16px;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    footer {
+      border-top: 1px solid #1f2b46;
+      color: var(--muted);
+      padding: 22px 0 34px;
+      margin-top: 18px;
+      font-size: .9rem;
+    }
+
+    @media (max-width: 920px) {
+      .hero { grid-template-columns: 1fr; }
+      .grid-3 { grid-template-columns: 1fr; }
+      .cta { flex-direction: column; align-items: flex-start; }
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="top-bar">
-      <div>🍓 <strong>IMPÉRIO MORANGOS</strong> | Gestão Administrativa</div>
+  <header>
+    <div class="container nav">
+      <div class="brand"><span class="logo"></span>DR Soluções ERP</div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
+        <a class="btn secondary" href="master.html">Área Master</a>
+        <a class="btn secondary" href="#contato">Falar com especialista</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
       <div>
-        <input type="file" id="importFile" style="display:none" onchange="Manager.importar(this)">
-        <button onclick="document.getElementById('importFile').click()" style="background:#4a69bd; color:white">📥 RESTAURAR</button>
-        <button onclick="Manager.exportar()" style="background:#e67e22; color:white">📤 BACKUP (.JSON)</button>
+        <h1>ERP SaaS Comercial com PDV para empresas em crescimento.</h1>
+        <p class="lead">
+          Plataforma em nuvem multiempresa para vendas, estoque, clientes, financeiro e relatórios avançados.
+          Interface moderna, rápida e preparada para desktop, tablet e PDV touchscreen.
+        </p>
+        <a class="btn" href="erp-completo.html">Abrir ERP Completo</a>
       </div>
-    </div>
-
-    <div class="dash">
-      <div class="card card-vendas"><span>TOTAL VENDIDO</span><span class="card-val" id="dash_total_vendas">R$ 0,00</span></div>
-      <div class="card card-recebido"><span>TOTAL RECEBIDO</span><span class="card-val" id="dash_total_pago">R$ 0,00</span></div>
-      <div class="card card-pendente"><span>A RECEBER</span><span class="card-val" id="dash_saldo_devedor">R$ 0,00</span></div>
-    </div>
-
-    <aside>
-      <h3>👥 Clientes</h3>
-      <input type="text" id="c_nome" placeholder="Nome">
-      <input type="text" id="c_end" placeholder="Endereço">
-      <button onclick="App.cadastrar('CLI')" style="background:var(--primary); color:white; width:100%">SALVAR CLIENTE</button>
-      <div id="lista_clientes" class="list-box"></div>
-
-      <h3>📦 Produtos</h3>
-      <input type="text" id="p_nome" placeholder="Produto">
-      <input type="text" id="p_preco" placeholder="Preço (ex: 4.50)">
-      <button onclick="App.cadastrar('PRO')" style="background:#6c5ce7; color:white; width:100%">SALVAR PRODUTO</button>
-      <div id="lista_produtos" class="list-box"></div>
-
-      <button onclick="Relatorio.gerar()" style="background:var(--secondary); color:white; width:100%; margin-top:20px; padding:12px">📄 RELATÓRIO PDF</button>
-    </aside>
-
-    <main>
-      <div style="border: 2px solid #eee; padding: 15px; border-radius: 10px; background: #fff;">
-        <h4 style="margin:0 0 10px 0">🛒 Lançar Venda</h4>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-          <input type="text" id="v_cli" placeholder="Cliente">
-          <input type="text" id="v_end" placeholder="Endereço">
+      <aside class="hero-card">
+        <span class="badge">Dashboard inteligente</span>
+        <h3 style="margin-top:0">Indicadores em tempo real</h3>
+        <div class="kpis">
+          <div class="kpi"><strong>R$ 124.850</strong><span>Faturamento do mês</span></div>
+          <div class="kpi"><strong>1.942</strong><span>Vendas realizadas</span></div>
+          <div class="kpi"><strong>R$ 64,29</strong><span>Ticket médio</span></div>
+          <div class="kpi"><strong>+12,8%</strong><span>Crescimento</span></div>
         </div>
-        <div style="display:flex; gap:5px; align-items:center;">
-          <select id="v_prod" style="flex:2">
-            <option value="">Selecione o produto</option>
-          </select>
-          <input type="number" id="v_qtd" value="1" style="flex:0.5" min="1">
-          <input type="text" id="v_prc" placeholder="R$ Unid (opcional)" style="flex:0.7">
-          <button onclick="App.venda.add()" style="background:var(--success); color:white">➕</button>
-        </div>
-        <div id="v_preview" style="font-size:11px; color:#e67e22; margin:5px 0"></div>
-        <label>Vencimento:</label>
-        <input type="date" id="v_venc">
-        <button onclick="App.venda.fechar()" style="background:var(--primary); color:white; width:100%; margin-top:10px">FINALIZAR E IMPRIMIR</button>
+      </aside>
+    </section>
+
+    <section id="modulos">
+      <h2 class="title">Módulos principais</h2>
+      <p class="subtitle">Tudo que o comércio precisa para operar com controle e escala.</p>
+      <div class="grid-3">
+        <article class="card"><h3>PDV completo</h3><p>Venda rápida com leitura de código de barras, desconto, múltiplos meios de pagamento e emissão de comprovante.</p></article>
+        <article class="card"><h3>Produtos e estoque</h3><p>Cadastro avançado com SKU, categoria, fornecedor, estoque mínimo, inventário e alertas automáticos.</p></article>
+        <article class="card"><h3>Clientes (CRM comercial)</h3><p>Cadastro completo com CPF/CNPJ, endereço, limite de crédito e histórico de compras por cliente.</p></article>
+        <article class="card"><h3>Financeiro</h3><p>Contas a pagar/receber, fluxo de caixa, lucro bruto/líquido e visão financeira diária.</p></article>
+        <article class="card"><h3>Relatórios</h3><p>Relatórios de vendas e desempenho por período, produto, cliente e vendedor com exportação PDF/Excel/CSV.</p></article>
+        <article class="card"><h3>Administração SaaS</h3><p>Multi-tenant com isolamento por empresa, perfis RBAC, auditoria e escalabilidade para milhares de usuários.</p></article>
       </div>
+    </section>
 
-      <h3>📜 Histórico de Movimentação</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Data</th>
-            <th>Cliente</th>
-            <th>Valor</th>
-            <th>Status / Motivo</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody id="lista_mov"></tbody>
-      </table>
-    </main>
-  </div>
+    <section>
+      <h2 class="title">Arquitetura moderna e segura</h2>
+      <div class="stack">
+        <span class="pill">React + Vite + Tailwind</span>
+        <span class="pill">Node.js + NestJS</span>
+        <span class="pill">PostgreSQL</span>
+        <span class="pill">Redis</span>
+        <span class="pill">JWT + Refresh Token</span>
+        <span class="pill">PWA instalável</span>
+        <span class="pill">Backup automático</span>
+        <span class="pill">API REST /auth /products /sales /reports</span>
+      </div>
+    </section>
 
-  <div id="cupom">
-    <center><h2>IMPÉRIO MORANGOS</h2></center><hr>
-    <strong>CLIENTE:</strong> <span id="p_cli"></span><br>
-    <strong>ENDEREÇO:</strong> <span id="p_end"></span><br>
-    <strong>VENCIMENTO:</strong> <span id="p_venc"></span><hr>
-    <div id="p_itens"></div><hr>
-    <div style="text-align:right"><strong>TOTAL: <span id="p_total"></span></strong></div>
-  </div>
+    <section id="contato" class="cta">
+      <div>
+        <h2 class="title" style="margin:0 0 8px">Pronto para publicar como site e evoluir para produção?</h2>
+        <p class="subtitle" style="margin:0">Podemos iniciar com versão institucional e evoluir para ERP completo por fases.</p>
+      </div>
+      <a class="btn" href="mailto:contato@drsolucoes.com">Solicitar demonstração</a>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      © <span id="ano"></span> DR Soluções • ERP SaaS Comercial • Multiempresa • PDV
+    </div>
+  </footer>
 
   <script>
-    const DB = {
-      get: (k) => {
-        try { return JSON.parse(localStorage.getItem(k)) || []; } catch(e){ return []; }
-      },
-      set: (k, v) => localStorage.setItem(k, JSON.stringify(v))
-    };
-
-    const formatBR = (v) => {
-      const n = Number(v) || 0;
-      return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n);
-    };
-
-    const App = {
-      carrinho: [],
-
-      init() {
-        const hoje = new Date().toISOString().split('T')[0];
-        document.getElementById('v_venc').value = hoje;
-        this.render();
-      },
-
-      cadastrar(tipo) {
-        if (tipo === 'CLI') {
-          const nome = document.getElementById('c_nome').value.trim();
-          const endereco = document.getElementById('c_end').value.trim();
-          if (!nome) return alert('Informe o nome do cliente.');
-          const lista = DB.get('cli');
-          lista.push({ id: Date.now(), nome, endereco });
-          DB.set('cli', lista);
-          document.getElementById('c_nome').value = '';
-          document.getElementById('c_end').value = '';
-          this.render();
-        } else {
-          const nome = document.getElementById('p_nome').value.trim();
-          const precoRaw = document.getElementById('p_preco').value.trim();
-          const preco = precoRaw ? parseFloat(precoRaw.toString().replace(',', '.')) : 0;
-          if (!nome) return alert('Informe o nome do produto.');
-          const lista = DB.get('pro');
-          lista.push({ id: Date.now(), nome, preco: isNaN(preco) ? 0 : preco });
-          DB.set('pro', lista);
-          document.getElementById('p_nome').value = '';
-          document.getElementById('p_preco').value = '';
-          this.render();
-        }
-      },
-
-      excluirCadastro(tipo, id) {
-        if (!confirm("Apagar do cadastro?")) return;
-        const chave = tipo === 'CLI' ? 'cli' : 'pro';
-        DB.set(chave, DB.get(chave).filter(i => i.id !== id));
-        this.render();
-      },
-
-      venda: {
-        add() {
-          const prodSel = document.getElementById('v_prod');
-          const p = prodSel.value;
-          const q = parseFloat(document.getElementById('v_qtd').value) || 1;
-          let vRaw = document.getElementById('v_prc').value.trim();
-
-          // If price not provided, try product price
-          let v;
-          if (vRaw) {
-            v = parseFloat(vRaw.replace(',', '.'));
-          } else {
-            const pro = DB.get('pro').find(pp => pp.nome === p);
-            v = pro ? Number(pro.preco) : NaN;
-          }
-          if (!p || isNaN(v) || v <= 0) return alert('Produto ou preço inválido.');
-          App.carrinho.push({ p, q, t: Number((q * v).toFixed(2)) });
-          document.getElementById('v_preview').innerText = "Carrinho: " + App.carrinho.map(i => `${i.q}x ${i.p}`).join(', ');
-        },
-        fechar() {
-          const cli = document.getElementById('v_cli').value.trim();
-          const end = document.getElementById('v_end').value.trim();
-          const venc = document.getElementById('v_venc').value;
-          if (!cli) return alert('Informe o cliente.');
-          if (App.carrinho.length === 0) return alert("Carrinho vazio!");
-          const total = App.carrinho.reduce((a, b) => a + b.t, 0).toFixed(2);
-
-          const mov = {
-            id: Date.now(),
-            data: new Date().toISOString(),
-            cli, end, venc,
-            val: total,
-            desc: App.carrinho.map(i => `${i.q}x ${i.p}`).join(', '),
-            status: (venc === new Date().toISOString().split('T')[0]) ? 'PAGO' : 'ABERTO',
-            motivo: (venc === new Date().toISOString().split('T')[0]) ? 'Venda à Vista' : 'Boleto/Prazo'
-          };
-
-          const hist = DB.get('mov'); hist.push(mov); DB.set('mov', hist);
-
-          // Print
-          document.getElementById('p_cli').innerText = cli;
-          document.getElementById('p_end').innerText = end;
-          document.getElementById('p_venc').innerText = new Date(venc).toLocaleDateString();
-          document.getElementById('p_itens').innerHTML = App.carrinho.map(i => `<div>${i.q}x ${i.p} - ${formatBR(i.t)}</div>`).join('');
-          document.getElementById('p_total').innerText = formatBR(total);
-          window.print();
-
-          // reset cart and UI
-          App.carrinho = [];
-          document.getElementById('v_preview').innerText = '';
-          document.getElementById('v_prc').value = '';
-          document.getElementById('v_qtd').value = 1;
-          this_render = App; // no-op to avoid linter warning inlined
-          App.render();
-        }
-      },
-
-      baixarBoleto(id) {
-        const motivo = prompt("Motivo do Pagamento (Ex: Pix, Dinheiro, Transferência):", "Pix");
-        if (motivo === null) return;
-        const hist = DB.get('mov');
-        const idx = hist.findIndex(m => m.id === id);
-        if (idx === -1) return;
-        hist[idx].status = 'PAGO';
-        hist[idx].motivo = motivo;
-        DB.set('mov', hist);
-        this.render();
-      },
-
-      apagarNota(id) {
-        if (!confirm("ATENÇÃO: Deseja apagar esta nota permanentemente? Isso alterará seu saldo financeiro.")) return;
-        const hist = DB.get('mov').filter(m => m.id !== id);
-        DB.set('mov', hist);
-        this.render();
-      },
-
-      render() {
-        const movs = DB.get('mov').slice().reverse();
-        const clis = DB.get('cli');
-        const pros = DB.get('pro');
-
-        const vTot = movs.reduce((a,b) => a + parseFloat(b.val || 0), 0);
-        const pTot = movs.filter(m => m.status === 'PAGO').reduce((a,b) => a + parseFloat(b.val || 0), 0);
-        document.getElementById('dash_total_vendas').innerText = formatBR(vTot);
-        document.getElementById('dash_total_pago').innerText = formatBR(pTot);
-        document.getElementById('dash_saldo_devedor').innerText = formatBR(vTot - pTot);
-
-        document.getElementById('lista_clientes').innerHTML = clis.map(c => `<div class="item"><div><strong>${c.nome}</strong><br><small>${c.endereco || ''}</small></div><div><button onclick="document.getElementById('v_cli').value='${c.nome}'; document.getElementById('v_end').value='${c.endereco || ''}'" style="background:var(--success); color:white">✅</button><button onclick="App.excluirCadastro('CLI', ${c.id})" class="btn-del">🗑️</button></div></div>`).join('');
-        document.getElementById('lista_produtos').innerHTML = pros.map(p => `<div class="item"><span>${p.nome} ${p.preco ? `- ${formatBR(p.preco)}` : ''}</span><div><button onclick="document.getElementById('v_prod').value='${p.nome}'; document.getElementById('v_prc').value='${p.preco ? p.preco : ''}'" style="background:#6c5ce7; color:white">🛒</button><button onclick="App.excluirCadastro('PRO', ${p.id})" class="btn-del">🗑️</button></div></div>`).join('');
-
-        // populate product select
-        const sel = document.getElementById('v_prod');
-        sel.innerHTML = `<option value="">Selecione o produto</option>` + pros.map(p => `<option value="${p.nome}">${p.nome}${p.preco ? ' - ' + formatBR(p.preco) : ''}</option>`).join('');
-
-        document.getElementById('lista_mov').innerHTML = movs.map(m => `
-          <tr>
-            <td>${new Date(m.data).toLocaleDateString()}</td>
-            <td><strong>${m.cli}</strong></td>
-            <td>${formatBR(m.val)}</td>
-            <td><span class="status-${m.status.toLowerCase()}">${m.status}</span><br><small>${m.motivo || ''}</small></td>
-            <td>
-              ${m.status === 'ABERTO' ? `<button class="btn-quitar" onclick="App.baixarBoleto(${m.id})">QUITAR</button>` : ''}
-              <button class="btn-del" onclick="App.apagarNota(${m.id})">🗑️ APAGAR</button>
-            </td>
-          </tr>`).join('');
-      }
-    };
-
-    const Manager = {
-      exportar() {
-        const d = { cli: DB.get('cli'), pro: DB.get('pro'), mov: DB.get('mov') };
-        const json = JSON.stringify(d, null, 2);
-        const blob = new Blob([json], { type: 'application/json;charset=utf-8' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `IMP_MORANGOS_BACKUP_${new Date().toISOString().slice(0,10)}.json`;
-        a.click();
-      },
-      importar(input) {
-        const file = input.files[0];
-        if (!file) return;
-        const fr = new FileReader();
-        fr.onload = (e) => {
-          try {
-            const d = JSON.parse(e.target.result);
-            if (!d) throw new Error('Arquivo inválido');
-            DB.set('cli', d.cli || []);
-            DB.set('pro', d.pro || []);
-            DB.set('mov', d.mov || []);
-            alert('Backup restaurado com sucesso!');
-            location.reload();
-          } catch (err) {
-            alert('Falha ao restaurar: arquivo inválido.');
-            console.error(err);
-          }
-        };
-        fr.readAsText(file);
-      }
-    };
-
-    const Relatorio = {
-      gerar() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        const movs = DB.get('mov') || [];
-        doc.text("RELATÓRIO IMPÉRIO MORANGOS", 14, 15);
-        doc.autoTable({
-          startY: 25,
-          head: [['Data', 'Cliente', 'Valor', 'Status', 'Motivo']],
-          body: movs.map(m => [new Date(m.data).toLocaleDateString(), m.cli, formatBR(m.val), m.status, m.motivo || ''])
-        });
-        doc.save("Relatorio.pdf");
-      }
-    };
-
-    document.addEventListener('DOMContentLoaded', () => App.init());
+    document.getElementById('ano').textContent = new Date().getFullYear();
   </script>
 </body>
 </html>

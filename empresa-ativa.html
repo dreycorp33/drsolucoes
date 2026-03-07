@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Subpágina da empresa ativa com acesso aos módulos." />
+  <title>Empresa Ativa | DR Soluções</title>
+  <style>
+    :root{--bg:#0b1220;--panel:#111b33;--panel2:#1a2b4f;--border:#2c4374;--text:#ebf1ff;--muted:#9eb3df;--pri:#4f8cff}
+    *{box-sizing:border-box} body{margin:0;font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
+    .container{width:min(1080px,94vw);margin:0 auto}
+    header{border-bottom:1px solid #1f2b46;background:rgba(11,18,32,.95)}
+    .top{display:flex;justify-content:space-between;align-items:center;padding:14px 0;gap:10px;flex-wrap:wrap}
+    .panel{margin-top:16px;background:linear-gradient(160deg,var(--panel),var(--panel2));border:1px solid var(--border);border-radius:12px;padding:14px}
+    .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.kpi{background:#0f1a33;border:1px solid #2f4679;border-radius:10px;padding:10px}.kpi strong{display:block}
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;border:1px solid #4966a6;margin:4px;color:#d4e4ff}
+    .btn{border:0;border-radius:10px;padding:12px 14px;font-weight:800;background:var(--pri);color:#fff;cursor:pointer;min-height:46px}
+    .muted{color:var(--muted)}
+    @media(max-width:900px){.kpis{grid-template-columns:1fr 1fr}.btn{width:100%}}
+  </style>
+</head>
+<body>
+<header>
+  <div class="container top">
+    <div>
+      <strong id="title">Empresa ativa</strong>
+      <div class="muted" id="meta"></div>
+    </div>
+    <button class="btn" id="btnVoltarApp">Abrir sistema da empresa</button>
+  </div>
+</header>
+
+<main class="container">
+  <section class="panel">
+    <h2 style="margin-top:0">Subpágina real da empresa ativa</h2>
+    <p class="muted">Página exclusiva da empresa com status ativo, mostrando credenciais e módulos liberados no master.</p>
+    <div class="kpis">
+      <div class="kpi"><strong id="kEmpresa">-</strong><span class="muted">Empresa</span></div>
+      <div class="kpi"><strong id="kPlano">-</strong><span class="muted">Plano</span></div>
+      <div class="kpi"><strong id="kStatus">-</strong><span class="muted">Status</span></div>
+      <div class="kpi"><strong id="kUser">-</strong><span class="muted">Usuário acesso</span></div>
+    </div>
+    <h3>Módulos liberados</h3>
+    <div id="modulos"></div>
+  </section>
+</main>
+
+<script>
+const STORE={companies:'dr_master_companies',releases:'dr_master_releases'};
+const getJSON=(k,f=[])=>{try{return JSON.parse(localStorage.getItem(k))??f}catch{return f}};
+const params=new URLSearchParams(location.search);
+const cid=params.get('cid');
+const token=params.get('t');
+const companies=getJSON(STORE.companies,[]);
+const releases=getJSON(STORE.releases,[]);
+const company=companies.find(c=>c.id===cid);
+const release=releases.find(r=>r.companyId===cid&&r.token===token);
+
+if(!company||!release||company.status!=='Ativa'){
+  document.body.innerHTML='<div style="padding:20px;color:#fff">Empresa não ativa ou link inválido.</div>';
+  throw new Error('invalid');
+}
+
+document.getElementById('title').textContent=`${company.nome} • Área da empresa ativa`;
+document.getElementById('meta').textContent=`Ambiente ${release.env} • Token válido`;
+document.getElementById('kEmpresa').textContent=company.nome;
+document.getElementById('kPlano').textContent=company.plano;
+document.getElementById('kStatus').textContent=company.status;
+document.getElementById('kUser').textContent=company.loginUser;
+document.getElementById('modulos').innerHTML=release.modules.map(m=>`<span class="pill">${m}</span>`).join('');
+document.getElementById('btnVoltarApp').onclick=()=>location.href=`app.html?cid=${encodeURIComponent(cid)}&t=${encodeURIComponent(token)}`;
+</script>
+</body>
+</html>
