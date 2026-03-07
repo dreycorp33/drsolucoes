@@ -1,26 +1,33 @@
-# drsolucoes — Blueprint ERP SaaS Comercial + PDV
+# DR Soluções — Site institucional (GitHub Pages)
 
-Este repositório agora contém uma base de planejamento técnico para construir um sistema ERP comercial SaaS multiempresa com PDV, financeiro, estoque, relatórios e API REST.
+Este repositório publica um site institucional estático da solução ERP SaaS Comercial + PDV.
 
-## Conteúdo
+## Arquivos principais
 
-- `docs/saas-erp-architecture.md` — arquitetura de referência, módulos, segurança, fases de entrega e checklist de produção.
-- `docs/database-schema.sql` — modelo relacional inicial PostgreSQL multi-tenant com entidades principais.
-- `docs/api-openapi.yaml` — especificação OpenAPI inicial com endpoints essenciais (`/auth`, `/products`, `/customers`, `/sales`, `/reports`).
-- `index.html` — aplicação legada estática originalmente existente no projeto.
+- `index.html` — página institucional responsiva pronta para publicação.
+- `.nojekyll` — garante publicação estática no GitHub Pages sem processamento Jekyll.
+- `docs/` — documentação técnica (arquitetura, schema e API) para evolução do produto.
 
-## Como usar este material
+## Publicar no GitHub Pages
 
-1. Revisar arquitetura e ajustar stack final.
-2. Importar schema SQL em ambiente PostgreSQL de desenvolvimento.
-3. Gerar servidor inicial da API a partir do OpenAPI/NestJS.
-4. Implementar em fases (fundação → PDV → financeiro/relatórios → escala SaaS).
+### Opção A — projeto em subpasta
+URL final: `https://<usuario>.github.io/<repo>`
 
-## Próximo passo recomendado
+1. Faça push da branch `main`.
+2. No GitHub: **Settings → Pages**.
+3. Em **Build and deployment**, escolha **Deploy from a branch**.
+4. Selecione **main** e pasta **/(root)**.
+5. Salve e aguarde a publicação.
 
-Criar monorepo com:
+### Opção B — domínio raiz do usuário
+URL final: `https://<usuario>.github.io`
 
-- `apps/api` (NestJS)
-- `apps/web` (React + Vite)
-- `apps/institutional` (site institucional)
-- `packages/ui` (componentes compartilhados)
+1. Renomeie o repositório para `<usuario>.github.io`.
+2. Faça push da branch `main`.
+3. O site passa a servir no domínio raiz do usuário.
+
+## Próximos passos
+
+- Integrar formulário de contato com API/CRM.
+- Separar CSS/JS em `assets/`.
+- Evoluir para monorepo (`apps/web`, `apps/api`, `apps/institutional`).
